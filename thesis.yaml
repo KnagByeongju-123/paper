@@ -7,8 +7,8 @@ info:
   title_ko: "논문 제목을 입력하세요"
   subtitle_ko: ""                      # 부제 (없으면 비워두기)
   title_en: "Thesis Title in English"
-  degree: "석사"                        # 석사 / 박사
-  degree_en: "Master's Thesis"
+  degree: "박사"                        # 석사 / 박사
+  degree_en: "Doctoral Dissertation"
   university: "○○대학교 대학원"
   university_en: "Graduate School, ○○ University"
   department: "○○학과"
@@ -18,7 +18,7 @@ info:
   advisor: "○○○ 교수"
   date: "2027년 2월"                    # 표지에 찍히는 날짜
   # 인준지(심사위원 서명 페이지)가 필요하면 앞의 # 을 지우고 이름 입력
-  # committee: ["위원장 ○○○", "위원 ○○○", "위원 ○○○"]
+  # committee: ["위원장 ○○○", "위원 ○○○", "위원 ○○○", "위원 ○○○", "위원 ○○○"]   # 박사: 보통 5인
 
 # 본문 구성: 위에서부터 차례대로 논문에 들어갑니다.
 #   file     : chapters/ 안의 파일 이름
