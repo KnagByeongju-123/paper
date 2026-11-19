@@ -48,33 +48,50 @@ flowchart TB
 
 ## 사용법
 
-### 1. 처음 한 번: 논문 정보 입력
-[`thesis.yaml`](thesis.yaml) 에서 제목, 이름, 학교, 학과, 지도교수, 날짜를 바꿉니다.
-심사위원 서명 페이지(인준지)가 필요하면 `info:` 아래에 추가합니다.
-
-```yaml
-  committee: ["위원장 ○○○", "위원 ○○○", "위원 ○○○"]
-```
-
-### 2. 자료 넣기 (아무 형식이나)
-- 파일을 `sources/` 의 알맞은 폴더에 넣거나, Claude 채팅에 바로 붙여넣기/첨부
-- 그리고 **"이 자료 3장 연구방법에 반영해줘"** 처럼 말하면 됩니다. (어디에 넣을지 몰라도 "반영해줘"만 해도 됨)
-
-### 3. 논문 파일 만들기
+모든 작업은 `thesis.py` 하나로 합니다. 그냥 실행하면 번호로 고르는 메뉴가 나옵니다.
 
 ```bash
-python scripts/build.py
+python thesis.py
 ```
 
-→ `output/thesis.docx`, `output/thesis.pdf` 생성
-
-### 4. 진행 상황 보기
+### 1. 처음 한 번: 주제와 기본 정보 입력
 
 ```bash
-python scripts/check.py
+python thesis.py init
 ```
 
-장별 글자수, 남은 `[TODO]`, 빠진 그림·인용 등을 알려줍니다.
+질문에 차례로 답하면 됩니다: 제목(한/영) → 학위·학교·학과 → 이름·지도교수 → **연구 주제 요약 → 연구 방법 → 연구 문제 → 주제어**.
+연구 문제는 1장 「연구 문제」에, 주제어는 국문 초록에 자동으로 들어갑니다.
+(심사위원 서명 페이지가 필요하면 `thesis.yaml` 의 `committee` 줄 앞 `#` 을 지우고 이름 입력)
+
+### 2. 자료 넣기 — 텍스트든 이미지든
+
+| 하고 싶은 것 | 명령 |
+|-------------|------|
+| 질문에 답하며 넣기 | `python thesis.py add` |
+| 캡처 이미지를 3장 「연구 설계」에 그림으로 | `python thesis.py add 캡처.png --to 3 --section "연구 설계" --caption "연구 모형"` |
+| 메모 파일(.txt/.md/.docx)을 1장 「연구 배경」에 | `python thesis.py add 메모.txt --to 1 --section "연구 배경"` |
+| 글을 바로 입력해서 | `python thesis.py add --text "본 연구는 …" --to 1 --section "연구 목적"` |
+| 어디 넣을지 모르는 자료(PDF 논문 등) | `python thesis.py add 논문.pdf`  → '대기'로 보관 |
+
+- 넣은 자료의 원본은 `sources/` 에 날짜별로 보관되고, `sources/SOURCES.md` 에 "무엇을 어디에 넣었는지" 기록됩니다.
+- 그림은 자동으로 「그림 3-1」처럼 번호가 붙습니다.
+- 그 다음 Claude 에게 이렇게 말하면 됩니다.
+  - **"대기 자료 반영해줘"**: 보관만 해 둔 자료를 알맞은 장에 정리해 넣습니다.
+  - **"방금 넣은 부분 논문체로 다듬어줘"**: 넣은 글을 학술 문체로 다듬습니다.
+- 채팅에 글이나 이미지를 바로 붙여넣고 "반영해줘"라고 해도 됩니다.
+
+### 3. 진행 상황 보기 / 논문 파일 만들기
+
+```bash
+python thesis.py status
+```
+
+```bash
+python thesis.py build
+```
+
+장별 글자수와 남은 `[TODO]`를 보여 주고, `output/thesis.docx` 와 `output/thesis.pdf` 를 만듭니다.
 
 ## 자동으로 해주는 것
 
@@ -92,6 +109,7 @@ python scripts/check.py
 
 ```
 paper/
+├── thesis.py              # ★ 사용자 도구: 주제 입력·자료 추가·현황·빌드
 ├── CLAUDE.md              # Claude 작성 규칙 (핵심)
 ├── thesis.yaml            # 논문 정보·장 순서·양식 설정
 ├── references.bib         # 참고문헌

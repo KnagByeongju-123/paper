@@ -71,13 +71,14 @@ def cover_page(cfg: Config) -> str:
 def submission_page(cfg: Config) -> str:
     """제출지: '이 논문을 ○○ 석사학위 논문으로 제출함'."""
     i = cfg.info
-    major = i.get("major", "") or i.get("department", "")
+    # "○○전공" → "○○", "○○학과" → "○○학"  (예: 경영학과 → 경영학 석사학위)
+    field = (i.get("major") or "").removesuffix("전공").strip() or (i.get("department") or "").removesuffix("과").strip()
     return "\n\n".join([
         PAGE_BREAK,
         styled("Cover Title", i.get("title_ko", "")),
         styled("Cover English", i.get("title_en", "")), blank(4),
         styled("Cover Info", f"지도교수  {i.get('advisor', '')}"), blank(2),
-        styled("Center Text", f"이 논문을 {major.replace('전공', '')} {i.get('degree', '')}학위 논문으로 제출함"),
+        styled("Center Text", f"이 논문을 {field} {i.get('degree', '')}학위 논문으로 제출함"),
         styled("Center Text", i.get("date", "")), blank(4),
         styled("Cover Info", i.get("university", "")),
         styled("Cover Info", f"{i.get('department', '')} {i.get('major', '')}".strip()),

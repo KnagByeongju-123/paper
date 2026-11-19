@@ -27,6 +27,28 @@ sources/ (글·캡처·PDF·데이터) ─▶ chapters/*.md + figures/ ─▶ sc
 
 ---
 
+## 1-1. 연구 주제 (thesis.yaml → `topic:`)
+
+- 사용자가 `python thesis.py init` 으로 입력한 **주제 요약·분야·연구 방법·연구 문제·주제어**가 `thesis.yaml` 맨 아래 `topic:` 에 있다.
+- 원고를 쓰기 전 항상 이것을 읽고, 모든 장이 **이 연구 문제에 답하는 방향**으로 일관되게 쓴다.
+- 비어 있으면 사용자에게 `python thesis.py init` 실행 또는 주제를 말해 달라고 요청한다.
+
+## 1-2. 사용자용 도구 `thesis.py` (사용자가 직접 자료를 넣는 경우)
+
+| 명령 | 동작 |
+|------|------|
+| `python thesis.py` | 메뉴 (번호로 선택) |
+| `python thesis.py init` | 주제·기본정보 질문 → `thesis.yaml`, 연구문제는 1장, 주제어는 국문초록에 자동 기입 |
+| `python thesis.py add 파일 --to 3 --section "연구 설계" --caption "연구 모형"` | 이미지 → `figures/` 복사 + 그림으로 삽입 |
+| `python thesis.py add 메모.txt --to 1 --section "연구 배경"` / `--text "…"` | 텍스트(.txt/.md/.docx) → 해당 절의 [TODO] 자리 또는 절 끝에 **원문 그대로** 삽입 |
+| `python thesis.py add 자료.pdf` (장 미지정) | `sources/` 보관 + SOURCES.md 에 **대기** 로 기록만 |
+| `python thesis.py status` / `build` | 현황 / Word+PDF 생성 |
+
+Claude 의 후속 처리:
+- **"대기 자료 반영해줘"** → `SOURCES.md` 에서 상태가 `대기` 인 행을 찾아 2절 절차대로 반영하고 상태를 `반영` 으로 바꾼다.
+- **"방금 넣은 부분 다듬어줘"** → `thesis.py add` 는 원문을 그대로 넣으므로, 해당 위치를 5절 문체 규칙에 맞게 다듬는다(내용·수치는 바꾸지 않음).
+- Claude 도 자료를 반영할 때 이 도구를 써도 된다 (보관·기록·그림 번호가 자동 처리됨).
+
 ## 2. 사용자가 자료를 주면 (핵심 작업 절차)
 
 사용자가 "이거 반영해줘", "자료 넣었어" 등으로 자료를 주면 **반드시 이 순서**로 한다.
