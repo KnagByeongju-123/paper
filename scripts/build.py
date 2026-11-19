@@ -32,6 +32,16 @@ from thesis_lib import (  # noqa: E402
 
 PAGE_BREAK = '```{=openxml}\n<w:p><w:r><w:br w:type="page"/></w:r></w:p>\n```'
 
+# 구역(쪽번호 체계) 경계 표시. pandoc 이 Word 를 만든 뒤 split_sections() 가 진짜 '구역 나누기'로 바꾼다.
+#   cover : 표지·제출지·인준지 → 쪽번호 없음
+#   front : 국문초록·목차      → i, ii, iii (로마 숫자)
+#   (나머지) 본문~끝            → 1, 2, 3   (1부터 다시)
+SECTION_MARK = "%%SECTION_END:{}%%"
+
+
+def section_end(name: str) -> str:
+    return f'```{{=openxml}}\n<w:p><w:r><w:t>{SECTION_MARK.format(name)}</w:t></w:r></w:p>\n```'
+
 
 # ---------------------------------------------------------------------------
 # 앞부분: 표지, 제출지, 인준지, 목차
@@ -205,13 +215,65 @@ def assemble(cfg: Config) -> tuple[str, Numberer]:
     references = "# 참고문헌\n\n::: {#refs}\n:::"
     doc = "\n\n".join(filter(None, [
         cover_page(cfg), submission_page(cfg), approval_page(cfg),
+        section_end("cover"),
         *blocks["front"],
         toc_pages(cfg, num.n_fig, num.n_tbl),
+        section_end("front"),
         *blocks["chapter"],
         references,
         *blocks["back"],
     ]))
     return num.resolve_refs(doc), num
+
+
+def split_sections(docx_path: Path):
+    """표시(%%SECTION_END:…%%) 자리를 Word '구역 나누기'로 바꾸고 구역마다 쪽번호 형식을 정한다."""
+    import copy
+
+    from docx import Document
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+
+    doc = Document(str(docx_path))
+    body = doc.element.body
+    last_sect = body.find(qn("w:sectPr"))           # 문서 끝(본문) 구역 설정
+
+    def page_numbers(sect, fmt: str | None):
+        for old in sect.findall(qn("w:pgNumType")):
+            sect.remove(old)
+        if fmt:
+            el = OxmlElement("w:pgNumType")
+            el.set(qn("w:fmt"), fmt)
+            el.set(qn("w:start"), "1")
+            # w:pgNumType 은 w:cols / w:docGrid 등보다 앞에 와야 한다
+            anchor = next((c for c in sect if c.tag in (qn("w:cols"), qn("w:formProt"), qn("w:vAlign"),
+                           qn("w:noEndnote"), qn("w:titlePg"), qn("w:textDirection"), qn("w:bidi"),
+                           qn("w:rtlGutter"), qn("w:docGrid"))), None)
+            if anchor is not None:
+                anchor.addprevious(el)
+            else:
+                sect.append(el)
+
+    found = set()
+    for p in list(doc.paragraphs):
+        text = p.text.strip()
+        for name in ("cover", "front"):
+            if text == SECTION_MARK.format(name):
+                sect = copy.deepcopy(last_sect)
+                for r in p._p.findall(qn("w:r")):
+                    p._p.remove(r)
+                if name == "cover":
+                    # 바닥글(쪽번호) 없음
+                    for ref in sect.findall(qn("w:footerReference")):
+                        sect.remove(ref)
+                    page_numbers(sect, None)
+                else:
+                    page_numbers(sect, "lowerRoman")
+                p._p.get_or_add_pPr().append(sect)
+                found.add(name)
+    page_numbers(last_sect, "decimal")
+    doc.save(str(docx_path))
+    return found
 
 
 def run_pandoc(cfg: Config, md_path: Path, docx_path: Path, ref_docx: Path):
@@ -264,6 +326,7 @@ def main():
     text, num = assemble(cfg)
     md_path.write_text(text, encoding="utf-8")
     run_pandoc(cfg, md_path, docx_path, ref_docx)
+    split_sections(docx_path)
     print("🔧 3/3 목차 쪽번호 채우고 PDF 만드는 중…")
     make_pdf = cfg.fmt.get("pdf", True) and not args.no_pdf
     finalize_with_libreoffice(docx_path, make_pdf)
