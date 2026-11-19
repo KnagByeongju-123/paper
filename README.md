@@ -121,6 +121,22 @@ python thesis.py build
 | 쪽번호 | 자동 | 표지·제출지·인준지 없음 → 초록·목차 i, ii… → 본문부터 1, 2… |
 | 미완성 표시 | `[TODO: …]` | 굵게 표시 + 검사 시 개수 알림 |
 
+## 입체(3D) 그림 만들기 — Blender
+
+금형·장치 같은 그림은 무료 3D 프로그램 [Blender](https://www.blender.org) 를 파이썬으로 조종해서 그립니다.
+스크립트로 남기 때문에 치수를 바꿔 언제든 똑같이 다시 그릴 수 있습니다.
+
+```bash
+python scripts/figures/make_figures.py --quick
+```
+
+```bash
+python scripts/figures/make_figures.py --punch-d 30 --thick 2 --gap 3
+```
+
+→ `figures/clearance_3d.png` (반단면 + 간극 확대, 한글 라벨 자동). 위 첫 줄은 빠른 미리보기, 둘째 줄은 치수를 바꾼 고품질 렌더입니다.
+유튜브·웹 캡처는 저작권 때문에 그대로 싣지 말고 참고용으로 `sources/images/` 에 넣은 뒤 다시 그리는 것을 권장합니다.
+
 ## 폴더 구조
 
 ```
@@ -133,7 +149,7 @@ paper/
 │   ├── SOURCES.md         #    반영 기록
 │   ├── notes/ images/ papers/ data/
 ├── chapters/              # ② 장별 원고 (Markdown)
-├── figures/               #    논문에 실리는 그림
+├── figures/               #    논문에 실리는 그림 (scripts/figures/ 로 생성)
 ├── templates/             #    참고문헌 양식(apa.csl), Word 서식 틀
 ├── scripts/               # ③ 검사·빌드 프로그램
 │   ├── gui.py  gui.html   # 입력 화면 (브라우저)
