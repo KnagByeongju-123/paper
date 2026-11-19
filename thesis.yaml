@@ -1,0 +1,60 @@
+# =============================================================
+#  논문 기본 정보 (표지·초록·목차·본문 구성을 여기서 정합니다)
+#  - 값만 바꾸면 됩니다. 들여쓰기(앞 공백)는 그대로 두세요.
+# =============================================================
+
+info:
+  title_ko: "논문 제목을 입력하세요"
+  subtitle_ko: ""                      # 부제 (없으면 비워두기)
+  title_en: "Thesis Title in English"
+  degree: "석사"                        # 석사 / 박사
+  degree_en: "Master's Thesis"
+  university: "○○대학교 대학원"
+  university_en: "Graduate School, ○○ University"
+  department: "○○학과"
+  major: "○○전공"
+  author: "홍길동"
+  author_en: "Gildong Hong"
+  advisor: "○○○ 교수"
+  date: "2027년 2월"                    # 표지에 찍히는 날짜
+  # 인준지(심사위원 서명 페이지)가 필요하면 앞의 # 을 지우고 이름 입력
+  # committee: ["위원장 ○○○", "위원 ○○○", "위원 ○○○"]
+
+# 본문 구성: 위에서부터 차례대로 논문에 들어갑니다.
+#   file     : chapters/ 안의 파일 이름
+#   numbered : true 이면 "제1장, 1.1, 1.1.1" 식으로 자동 번호
+front_matter:
+  - { file: abstract_ko.md }            # 국문 초록 (목차 앞)
+
+chapters:
+  - { file: 01_introduction.md,   numbered: true }   # 서론
+  - { file: 02_literature.md,     numbered: true }   # 이론적 배경 / 선행연구
+  - { file: 03_method.md,         numbered: true }   # 연구 방법
+  - { file: 04_results.md,        numbered: true }   # 연구 결과
+  - { file: 05_conclusion.md,     numbered: true }   # 결론
+
+back_matter:
+  - { file: abstract_en.md }            # 영문 초록 (참고문헌 뒤)
+
+# 출력 형식 설정
+format:
+  output_name: "thesis"                 # output/thesis.docx, output/thesis.pdf
+  pdf: true                             # PDF도 만들지 여부
+  toc: true                             # 목차
+  list_of_figures: true                 # 그림 목차
+  list_of_tables: true                  # 표 목차
+  csl: templates/apa.csl                # 참고문헌 양식 (APA 7판)
+  bibliography: references.bib
+  # 그림/표 번호 형식: {chapter}=장 번호, {n}=장 안에서의 순번
+  figure_label: "그림 {chapter}-{n}"
+  table_label: "표 {chapter}-{n}"
+  chapter_label: "제{n}장"
+
+# 페이지·글꼴 (대부분의 대학원 기본 양식 기준, 학교 규정에 맞게 수정)
+style:
+  paper: A4
+  margin_cm: { top: 3.0, bottom: 2.5, left: 3.0, right: 2.5 }
+  body_font: "NanumMyeongjo"            # 본문 글꼴 (Word에서는 '바탕' 등으로 바꿔도 됨)
+  heading_font: "NanumGothic"           # 제목 글꼴
+  body_size_pt: 11
+  line_spacing: 1.6                     # 줄 간격 (배수)
