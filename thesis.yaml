@@ -31,7 +31,8 @@ chapters:
   - { file: 02_literature.md,     numbered: true }   # 이론적 배경 / 선행연구
   - { file: 03_method.md,         numbered: true }   # 연구 방법
   - { file: 04_results.md,        numbered: true }   # 연구 결과
-  - { file: 05_conclusion.md,     numbered: true }   # 결론
+  - { file: 05_discussion.md,     numbered: true }   # 논의
+  - { file: 06_conclusion.md,     numbered: true }   # 결론
 
 back_matter:
   - { file: abstract_en.md }            # 영문 초록 (참고문헌 뒤)
