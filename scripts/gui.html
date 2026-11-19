@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>학위논문 작업실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&display=swap">
+<style>
+/* 레이아웃: 위 = 논문 제목 머리글 + 탭 3개, 가운데 = 작업 영역(카드 1장), 아래 고정 = Claude 입력란 */
+:root{
+  --bg:#f4f6f9; --paper:#ffffff; --ink:#1b2430; --muted:#5f6b7a; --line:#dbe1e8;
+  --accent:#23466e; --accent-soft:#e6edf6; --ok:#1f7a4d; --warn:#9a6400; --bad:#b3261e;
+  --dock:#ffffff; --shadow:0 -6px 24px rgba(20,35,55,.10);
+  --serif:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo","Batang",serif;
+  --sans:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Nanum Gothic","Noto Sans KR",system-ui,sans-serif;
+  --mono:ui-monospace,"D2Coding","Consolas",monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#12161c; --paper:#1a2029; --ink:#e6ebf1; --muted:#9aa6b4; --line:#2c3541;
+  --accent:#8fb3e0; --accent-soft:#1f2b3b; --ok:#5cc58e; --warn:#e2b04f; --bad:#f08a80;
+  --dock:#171c24; --shadow:0 -6px 24px rgba(0,0,0,.45); color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);padding-bottom:var(--dock-h,330px)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left))}
+header{padding-block:28px 8px}
+.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--muted)}
+h1{font:700 26px/1.3 var(--serif);margin:4px 0 2px;text-wrap:balance}
+.sub{color:var(--muted);font-size:14px}
+.progress{display:flex;gap:10px;align-items:center;margin-top:12px;font-size:13px;color:var(--muted)}
+.bar{flex:1;max-width:320px;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--accent);width:0}
+nav{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:18px 0 0;overflow-x:auto}
+nav button{border:0;background:none;padding:10px 16px;font:600 15px var(--sans);color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+nav button[aria-selected=true]{color:var(--accent);border-color:var(--accent)}
+section.panel{background:var(--paper);border:1px solid var(--line);border-top:0;border-radius:0 0 10px 10px;padding:22px}
+h2{font:700 17px/1.4 var(--serif);margin:22px 0 10px}
+h2:first-child{margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.grid .full{grid-column:1/-1}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+input,select,textarea{font:15px/1.5 var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;width:100%}
+textarea{resize:vertical;min-height:90px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.hint{font-size:12px;color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:8px;align-items:center}
+.row>input{flex:1}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--paper);padding:9px 18px;border-radius:7px;font:600 14px var(--sans);cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.small{padding:5px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:default}
+.actions{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+.msg{font-size:14px;white-space:pre-wrap}
+.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
+.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.mode{border:1px solid var(--line);border-radius:9px;padding:12px;cursor:pointer;background:var(--bg);text-align:left;font:inherit;color:inherit}
+.mode b{display:block;font-size:15px}
+.mode span{font-size:12px;color:var(--muted)}
+.mode[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft)}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:26px;text-align:center;color:var(--muted);cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop img{max-height:220px;max-width:100%;display:block;margin:0 auto 8px;border-radius:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:4px 11px;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;border:1px solid currentColor}
+.pill.ok{color:var(--ok)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}
+.mini{height:5px;background:var(--line);border-radius:3px;min-width:60px}
+.mini>i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.notes{margin:0;padding-left:18px;font-size:13px}
+.notes li.bad{color:var(--bad)}
+pre.log{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;font:12px/1.5 var(--mono);white-space:pre-wrap;max-height:260px;overflow:auto}
+/* 하단 Claude 입력란 */
+.dock{position:fixed;left:0;right:0;bottom:0;background:var(--dock);border-top:1px solid var(--line);box-shadow:var(--shadow);z-index:20;padding-bottom:env(safe-area-inset-bottom)}
+.dock .wrap{display:flex;flex-direction:column;gap:8px;padding-block:10px 12px}
+.dock-head{display:flex;align-items:center;gap:10px}
+.dock-head b{font:700 15px var(--serif)}
+.dock-head .status{font-size:12px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.log-area{height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 2px}
+.dock.min .log-area,.dock.min .chips{display:none}
+.bubble{max-width:85%;padding:8px 12px;border-radius:10px;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.bubble.me{align-self:flex-end;background:var(--accent);color:var(--paper)}
+.bubble.ai{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}
+.bubble.wait{color:var(--muted);font-style:italic}
+.send-row{display:flex;gap:8px;align-items:flex-end}
+.send-row textarea{min-height:44px;height:44px;max-height:140px}
+@media (max-width:640px){.grid,.modes{grid-template-columns:minmax(0,1fr)}.log-area{height:130px}h1{font-size:21px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="degreeLine">박사학위논문</div>
+    <h1 id="titleLine">논문 제목을 입력하세요</h1>
+    <div class="sub" id="metaLine"></div>
+    <div class="progress"><div class="bar"><i id="progBar"></i></div><span id="progText"></span></div>
+  </header>
+
+  <nav role="tablist">
+    <button role="tab" aria-selected="true" data-tab="setup">① 기본 정보·주제</button>
+    <button role="tab" aria-selected="false" data-tab="add">② 자료 넣기</button>
+    <button role="tab" aria-selected="false" data-tab="status">③ 진행 현황·만들기</button>
+  </nav>
+
+  <!-- ① 기본 정보·주제 -->
+  <section class="panel" id="tab-setup">
+    <h2>논문 기본 정보</h2>
+    <div class="grid">
+      <label class="full">논문 제목 (한글)<input id="title_ko" placeholder="예: 중소기업의 디지털 전환이 조직 성과에 미치는 영향"></label>
+      <label class="full">부제 (없으면 비워두기)<input id="subtitle_ko" placeholder="예: 조직 학습의 매개효과를 중심으로"></label>
+      <label class="full">논문 제목 (영문)<input id="title_en" placeholder="The Effect of Digital Transformation on ..."></label>
+      <label>학위<select id="degree"><option>박사</option><option>석사</option></select></label>
+      <label>제출 연월<input id="date" placeholder="예: 2027년 8월"></label>
+      <label>대학원<input id="university" placeholder="예: 한국대학교 대학원"></label>
+      <label>대학원 영문명<input id="university_en" placeholder="Graduate School, Korea University"></label>
+      <label>학과<input id="department" placeholder="예: 경영학과"></label>
+      <label>전공 (없으면 비워두기)<input id="major" placeholder="예: 경영정보전공"></label>
+      <label>이름<input id="author" placeholder="예: 김연구"></label>
+      <label>영문 이름<input id="author_en" placeholder="예: Yeongu Kim"></label>
+      <label class="full">지도교수<input id="advisor" placeholder="예: 박지도 교수"></label>
+    </div>
+
+    <h2>심사위원 <span class="hint">(인준지 서명란 · 박사는 보통 5인 · 비워두면 인준지 생략)</span></h2>
+    <div class="list" id="committeeList"></div>
+    <div class="actions" style="margin-top:8px"><button class="btn ghost small" type="button" id="addCommittee">+ 심사위원 추가</button></div>
+
+    <h2>연구 주제</h2>
+    <div class="grid">
+      <label class="full">연구 주제 요약 <span class="hint">무엇을, 왜 연구하나요? (한두 문장)</span>
+        <textarea id="t_summary" placeholder="예: 디지털 전환 수준이 중소기업의 조직 성과에 미치는 영향과 조직 학습의 매개 역할을 실증 분석한다."></textarea></label>
+      <label>연구 분야<input id="t_field" placeholder="예: 경영학 - 경영정보"></label>
+      <label>연구 방법
+        <input id="t_method" list="methodList" placeholder="골라도 되고 직접 써도 됩니다">
+        <datalist id="methodList">
+          <option value="양적연구 - 설문조사, 구조방정식(SEM)"><option value="양적연구 - 설문조사, 회귀분석">
+          <option value="양적연구 - 실험연구"><option value="질적연구 - 심층 인터뷰, 주제분석">
+          <option value="질적연구 - 사례연구"><option value="혼합연구 - 설문 + 인터뷰"><option value="문헌연구 - 체계적 문헌고찰">
+        </datalist></label>
+    </div>
+    <h2>연구 문제 <span class="hint">(1장 「연구 문제」에 자동으로 들어갑니다)</span></h2>
+    <div class="list" id="rqList"></div>
+    <div class="actions" style="margin-top:8px"><button class="btn ghost small" type="button" id="addRq">+ 연구 문제 추가</button></div>
+    <h2>주제어 <span class="hint">(쉼표로 구분 · 국문 초록에 자동으로 들어갑니다)</span></h2>
+    <input id="t_keywords" placeholder="예: 디지털 전환, 조직 성과, 중소기업, 조직 학습">
+
+    <div class="actions">
+      <button class="btn" id="saveSetup">저장하기</button>
+      <span class="msg" id="setupMsg"></span>
+    </div>
+  </section>
+
+  <!-- ② 자료 넣기 -->
+  <section class="panel" id="tab-add" hidden>
+    <h2>어떤 방식으로 넣을까요?</h2>
+    <div class="modes">
+      <button class="mode" type="button" data-mode="text" aria-pressed="true"><b>글 직접 입력</b><span>메모·초안·인터뷰 기록을 쓰거나 붙여넣기</span></button>
+      <button class="mode" type="button" data-mode="image" aria-pressed="false"><b>이미지 · 캡처</b><span>Ctrl+V 로 캡처 붙여넣기, 끌어다 놓기</span></button>
+      <button class="mode" type="button" data-mode="file" aria-pressed="false"><b>파일</b><span>txt · md · docx · pdf · xlsx · csv · hwp</span></button>
+    </div>
+
+    <div id="in-text" style="margin-top:16px">
+      <label>내용<textarea id="addText" rows="8" placeholder="예: 최근 중소기업의 디지털 전환은 생존 전략으로 주목받고 있다. ..."></textarea></label>
+    </div>
+    <div id="in-image" style="margin-top:16px" hidden>
+      <div class="drop" id="imgDrop" tabindex="0">
+        <div id="imgPreview"></div>
+        <div><b>여기를 누른 뒤 Ctrl+V</b> 로 캡처를 붙여넣거나, 이미지를 끌어다 놓거나, 눌러서 고르세요.</div>
+      </div>
+      <input type="file" id="imgInput" accept="image/*" hidden>
+      <div class="grid" style="margin-top:12px">
+        <label>그림 캡션 (논문에 "그림 3-1. ○○" 으로 표시)<input id="caption" placeholder="예: 연구 모형"></label>
+        <label>그림 앞 안내 문장 (선택 · @fig 자리에 그림 번호가 들어감)<input id="lead" placeholder="예: 본 연구의 연구 모형은 @fig 와 같다."></label>
+      </div>
+      <p class="hint">글자가 담긴 캡처(논문 페이지, 통계 결과표 등)는 장을 "아직 모름"으로 두면 Claude 가 내용을 읽어 본문·표로 옮깁니다.</p>
+    </div>
+    <div id="in-file" style="margin-top:16px" hidden>
+      <div class="drop" id="fileDrop" tabindex="0"><div id="fileName">파일을 끌어다 놓거나 눌러서 고르세요.</div></div>
+      <input type="file" id="fileInput" hidden>
+      <p class="hint">txt · md · docx 는 바로 본문에 넣을 수 있고, PDF · 엑셀 · 한글 파일은 보관 후 Claude 가 읽고 정리합니다.</p>
+    </div>
+
+    <h2>어디에 넣을까요?</h2>
+    <div class="grid">
+      <label>장<select id="toChapter"></select></label>
+      <label>절<select id="toSection"></select></label>
+      <label class="full">메모 (출처·설명 · 선택)<input id="note" placeholder="예: 김철수(2020) 3쪽 표 2 캡처"></label>
+    </div>
+    <label class="row" style="flex-direction:row;margin-top:12px;color:var(--ink)"><input type="checkbox" id="polish" style="width:auto"> 넣은 뒤 Claude 에게 논문체로 다듬어 달라고 요청하기</label>
+
+    <div class="actions">
+      <button class="btn" id="addBtn">자료 넣기</button>
+      <span class="msg" id="addMsg"></span>
+    </div>
+
+    <h2>최근 넣은 자료</h2>
+    <div class="tablewrap"><table><thead><tr><th>파일</th><th>종류</th><th>내용</th><th>반영 위치</th><th>상태</th></tr></thead><tbody id="srcBody"></tbody></table></div>
+  </section>
+
+  <!-- ③ 진행 현황 -->
+  <section class="panel" id="tab-status" hidden>
+    <h2>장별 진행 현황</h2>
+    <div class="tablewrap"><table><thead><tr><th>파일</th><th>제목</th><th class="num">글자수</th><th class="num">남은 TODO</th><th>진행</th></tr></thead><tbody id="chBody"></tbody></table></div>
+    <h2>검사 결과</h2>
+    <ul class="notes" id="checkList"></ul>
+    <h2>논문 파일 만들기</h2>
+    <div class="actions" style="margin-top:0">
+      <button class="btn" id="buildBtn">Word + PDF 만들기</button>
+      <a class="btn ghost" id="pdfLink" href="#" target="_blank" hidden>PDF 열기</a>
+      <a class="btn ghost" id="docxLink" href="#" hidden>Word 받기</a>
+      <span class="msg" id="buildMsg"></span>
+    </div>
+    <pre class="log" id="buildLog" hidden></pre>
+  </section>
+</div>
+
+<!-- 하단 Claude 입력란 -->
+<div class="dock" id="dock">
+  <div class="wrap">
+    <div class="dock-head">
+      <b>Claude 에게 요청</b>
+      <span class="status" id="backendStatus">연결 확인 중…</span>
+      <button class="btn ghost small" type="button" id="newChat">새 대화</button>
+      <button class="btn ghost small" type="button" id="toggleDock" aria-expanded="true">접기</button>
+    </div>
+    <div class="log-area" id="chatLog" aria-live="polite">
+      <div class="bubble ai">무엇을 도와드릴까요? 예: "대기 자료 반영해줘", "2장 선행연구 초안 써줘", "남은 TODO 정리해줘"</div>
+    </div>
+    <div class="chips">
+      <button class="chip" type="button">대기 자료 반영해줘</button>
+      <button class="chip" type="button">방금 넣은 부분 논문체로 다듬어줘</button>
+      <button class="chip" type="button">연구 주제에 맞게 서론 초안 써줘</button>
+      <button class="chip" type="button">검사하고 남은 TODO 알려줘</button>
+    </div>
+    <div class="send-row">
+      <textarea id="chatInput" placeholder="Claude 에게 보낼 내용 (Enter 보내기 · Shift+Enter 줄바꿈)"></textarea>
+      <button class="btn" id="sendBtn">보내기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const INFO = ["title_ko","subtitle_ko","title_en","degree","date","university","university_en","department","major","author","author_en","advisor"];
+let S = null, mode = "text", upload = null;
+
+async function api(path, body){
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  return r.json();
+}
+function setMsg(el, text, ok){ el.textContent = text; el.className = "msg " + (ok ? "ok" : "bad"); }
+function esc(s){ const d=document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; }
+
+/* ---------- 탭 ---------- */
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.setAttribute("aria-selected", x === b));
+  document.querySelectorAll("section.panel").forEach(p => p.hidden = p.id !== "tab-" + b.dataset.tab);
+  if (b.dataset.tab !== "setup") refresh(false);
+});
+
+/* ---------- 목록 입력(연구 문제·심사위원) ---------- */
+function addRow(listEl, value, placeholder){
+  const row = document.createElement("div"); row.className = "row";
+  row.innerHTML = `<input placeholder="${placeholder}"><button class="btn ghost small" type="button" aria-label="지우기">삭제</button>`;
+  row.querySelector("input").value = value || "";
+  row.querySelector("button").onclick = () => row.remove();
+  listEl.appendChild(row);
+}
+const rqPh = i => `연구 문제 ${i}. 예: 디지털 전환은 조직 성과에 정(+)의 영향을 미치는가?`;
+$("#addRq").onclick = () => addRow($("#rqList"), "", rqPh($("#rqList").children.length + 1));
+$("#addCommittee").onclick = () => addRow($("#committeeList"), "", "예: 위원 ○○○ 교수");
+const vals = el => [...el.querySelectorAll("input")].map(i => i.value.trim()).filter(Boolean);
+
+/* ---------- 상태 불러오기 ---------- */
+async function refresh(fillForm){
+  S = await api("/api/state");
+  const i = S.info;
+  $("#degreeLine").textContent = (i.degree || "박사") + "학위논문" + (i.university ? " · " + i.university : "");
+  $("#titleLine").textContent = i.title_ko || "논문 제목을 입력하세요";
+  $("#metaLine").textContent = [i.department, i.major, i.author, i.advisor && "지도 " + i.advisor].filter(Boolean).join(" · ");
+  const body = S.chapters.filter(c => c.section === "chapter");
+  const todo = S.chapters.reduce((a,c)=>a+c.todos,0), chars = S.chapters.reduce((a,c)=>a+c.chars,0);
+  const done = S.chapters.filter(c => c.exists && c.todos === 0).length;
+  $("#progBar").style.width = Math.round(done / Math.max(1,S.chapters.length) * 100) + "%";
+  $("#progText").textContent = `완성 ${done}/${S.chapters.length}개 파일 · 본문 ${chars.toLocaleString()}자 · 남은 TODO ${todo}곳`;
+  $("#backendStatus").textContent = S.backend.label;
+
+  if (fillForm){
+    INFO.forEach(k => { const el = $("#"+k); if (el) el.value = i[k] || (k==="degree" ? "박사" : ""); });
+    const t = S.topic || {};
+    $("#t_summary").value = t.summary || ""; $("#t_field").value = t.field || ""; $("#t_method").value = t.method || "";
+    $("#t_keywords").value = (t.keywords || []).join(", ");
+    $("#rqList").innerHTML = ""; (t.research_questions?.length ? t.research_questions : ["",""]).forEach((r,n) => addRow($("#rqList"), r, rqPh(n+1)));
+    $("#committeeList").innerHTML = ""; (S.committee.length ? S.committee : ["위원장 ","위원 ","위원 ","위원 ","위원 "]).forEach(m => addRow($("#committeeList"), m.trim() ? m : "", "예: " + m.trim() + " ○○○ 교수"));
+  }
+
+  // 자료 넣기: 장/절 선택
+  const sel = $("#toChapter"), prev = sel.value;
+  sel.innerHTML = `<option value="">아직 모름 → 보관만 (Claude 가 정리)</option>` +
+    S.chapters.map(c => `<option value="${esc(c.file)}">${c.section==="chapter" ? "제"+(body.indexOf(c)+1)+"장 " : ""}${esc(c.title || c.file)}</option>`).join("");
+  sel.value = prev; fillSections();
+  $("#srcBody").innerHTML = S.sources.slice(-8).reverse().map(r =>
+    `<tr><td>${esc(r.file)}</td><td>${esc(r.kind)}</td><td>${esc(r.summary)}</td><td>${esc(r.where)}</td><td><span class="pill ${r.status==="반영"?"ok":"warn"}">${esc(r.status)}</span></td></tr>`).join("")
+    || `<tr><td colspan="5" class="hint">아직 넣은 자료가 없습니다. 위에서 첫 자료를 넣어 보세요.</td></tr>`;
+
+  // 진행 현황
+  const maxc = Math.max(1, ...S.chapters.map(c => c.chars));
+  $("#chBody").innerHTML = S.chapters.map(c =>
+    `<tr><td>${esc(c.file)}</td><td>${esc(c.title)}</td><td class="num">${c.chars.toLocaleString()}</td>
+     <td class="num">${c.todos ? `<span class="pill warn">${c.todos}</span>` : `<span class="pill ok">완료</span>`}</td>
+     <td><div class="mini"><i style="width:${Math.round(c.chars/maxc*100)}%"></i></div></td></tr>`).join("");
+  $("#checkList").innerHTML = S.errors.map(e => `<li class="bad">${esc(e)}</li>`).join("") +
+    S.warnings.filter(w => !w.includes("미완성")).map(w => `<li>${esc(w)}</li>`).join("") ||
+    `<li>문제 없음</li>`;
+  const n = S.output_name;
+  $("#pdfLink").hidden = !S.outputs.pdf; $("#pdfLink").href = `/output/${n}.pdf?t=${Date.now()}`;
+  $("#docxLink").hidden = !S.outputs.docx; $("#docxLink").href = `/output/${n}.docx?t=${Date.now()}`;
+}
+function fillSections(){
+  const c = S?.chapters.find(x => x.file === $("#toChapter").value);
+  $("#toSection").innerHTML = c ? c.sections.map(s => `<option>${esc(s)}</option>`).join("") + `<option value="">장 끝에 추가</option>`
+                                : `<option value="">-</option>`;
+  $("#toSection").disabled = !c;
+}
+$("#toChapter").onchange = fillSections;
+
+/* ---------- ① 저장 ---------- */
+$("#saveSetup").onclick = async () => {
+  const info = {}; INFO.forEach(k => info[k] = $("#"+k).value.trim());
+  const committee = vals($("#committeeList")).filter(m => !/^(위원장|위원)$/.test(m));
+  const topic = { summary:$("#t_summary").value.trim(), field:$("#t_field").value.trim(), method:$("#t_method").value.trim(),
+                  research_questions: vals($("#rqList")), keywords: $("#t_keywords").value.split(",") };
+  const r = await api("/api/setup", {info, committee, topic});
+  setMsg($("#setupMsg"), r.message, r.ok); refresh(false);
+};
+
+/* ---------- ② 자료 넣기 ---------- */
+document.querySelectorAll(".mode").forEach(b => b.onclick = () => {
+  mode = b.dataset.mode; upload = null;
+  document.querySelectorAll(".mode").forEach(x => x.setAttribute("aria-pressed", x === b));
+  ["text","image","file"].forEach(m => $("#in-"+m).hidden = m !== mode);
+  $("#imgPreview").innerHTML = ""; $("#fileName").textContent = "파일을 끌어다 놓거나 눌러서 고르세요.";
+});
+function readFile(file, isImage){
+  const fr = new FileReader();
+  fr.onload = () => {
+    let name = file.name || "";
+    if (!name || name === "image.png") { const d = new Date(); name = `캡처_${d.getHours()}${String(d.getMinutes()).padStart(2,"0")}${String(d.getSeconds()).padStart(2,"0")}.png`; }
+    upload = {filename:name, data:fr.result};
+    if (isImage) $("#imgPreview").innerHTML = `<img alt="붙여넣은 이미지 미리보기" src="${fr.result}"><div class="hint">${esc(name)}</div>`;
+    else $("#fileName").textContent = "선택됨: " + name;
+  };
+  fr.readAsDataURL(file);
+}
+function wireDrop(zone, input, isImage){
+  zone.onclick = () => input.click();
+  zone.onkeydown = e => { if (e.key === "Enter") input.click(); };
+  input.onchange = () => input.files[0] && readFile(input.files[0], isImage);
+  zone.ondragover = e => { e.preventDefault(); zone.classList.add("over"); };
+  zone.ondragleave = () => zone.classList.remove("over");
+  zone.ondrop = e => { e.preventDefault(); zone.classList.remove("over"); const f = e.dataTransfer.files[0]; if (f) readFile(f, isImage); };
+}
+wireDrop($("#imgDrop"), $("#imgInput"), true);
+wireDrop($("#fileDrop"), $("#fileInput"), false);
+document.addEventListener("paste", e => {
+  if ($("#tab-add").hidden) return;
+  const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith("image/"));
+  if (item){ e.preventDefault(); if (mode !== "image") document.querySelector('.mode[data-mode="image"]').click(); readFile(item.getAsFile(), true); }
+});
+
+$("#addBtn").onclick = async () => {
+  const to = $("#toChapter").value;
+  const body = {mode, to, section:$("#toSection").value, note:$("#note").value.trim()};
+  if (mode === "text") body.text = $("#addText").value;
+  else { if (!upload) return setMsg($("#addMsg"), mode==="image" ? "이미지를 붙여넣거나 골라 주세요." : "파일을 골라 주세요.", false); Object.assign(body, upload); }
+  if (mode === "image"){ body.caption = $("#caption").value.trim(); body.lead = $("#lead").value.trim();
+    if (to && !body.caption) return setMsg($("#addMsg"), "그림 캡션을 입력해 주세요. (예: 연구 모형)", false); }
+  $("#addBtn").disabled = true;
+  const r = await api("/api/add", body);
+  $("#addBtn").disabled = false;
+  setMsg($("#addMsg"), r.message, r.ok);
+  if (r.ok){
+    $("#addText").value = ""; $("#caption").value = ""; $("#lead").value = ""; $("#note").value = ""; upload = null;
+    $("#imgPreview").innerHTML = ""; $("#fileName").textContent = "파일을 끌어다 놓거나 눌러서 고르세요.";
+    await refresh(false);
+    if ($("#polish").checked){
+      const where = to ? `${to} 「${body.section || "장 끝"}」` : "대기 자료";
+      sendChat(to ? `방금 ${where}에 넣은 내용을 CLAUDE.md 규칙에 맞게 논문체로 다듬어줘. 내용과 수치는 바꾸지 마.` : "방금 넣은 대기 자료를 읽고 알맞은 장에 반영해줘.");
+    }
+  }
+};
+
+/* ---------- ③ 만들기 ---------- */
+$("#buildBtn").onclick = async () => {
+  $("#buildBtn").disabled = true; setMsg($("#buildMsg"), "만드는 중… (10~30초)", true);
+  const r = await api("/api/build", {});
+  $("#buildBtn").disabled = false;
+  setMsg($("#buildMsg"), r.ok ? "완성되었습니다." : "오류가 있어 멈췄습니다. 아래 내용을 확인하세요.", r.ok);
+  $("#buildLog").hidden = false; $("#buildLog").textContent = r.message;
+  refresh(false);
+};
+
+/* ---------- 하단 Claude 입력란 ---------- */
+const log = $("#chatLog");
+function bubble(text, who){ const b = document.createElement("div"); b.className = "bubble " + who; b.textContent = text; log.appendChild(b); log.scrollTop = log.scrollHeight; return b; }
+async function sendChat(text){
+  text = (text || "").trim(); if (!text) return;
+  if ($("#dock").classList.contains("min")) $("#toggleDock").click();
+  bubble(text, "me"); $("#chatInput").value = ""; $("#sendBtn").disabled = true;
+  const w = bubble("Claude 가 작업 중입니다… (원고를 고치는 요청은 몇 분 걸릴 수 있어요)", "ai wait");
+  try{
+    const r = await api("/api/chat", {message:text});
+    w.className = "bubble ai"; w.textContent = r.reply;
+  }catch(e){ w.className = "bubble ai"; w.textContent = "작업실 프로그램과 연결이 끊겼습니다. 터미널에서 다시 실행해 주세요."; }
+  $("#sendBtn").disabled = false; refresh(false);
+}
+$("#sendBtn").onclick = () => sendChat($("#chatInput").value);
+$("#chatInput").onkeydown = e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); sendChat($("#chatInput").value); } };
+document.querySelectorAll(".chip").forEach(c => c.onclick = () => sendChat(c.textContent));
+$("#newChat").onclick = async () => { await api("/api/chat", {reset:true}); log.innerHTML = ""; bubble("새 대화를 시작합니다.", "ai"); };
+function dockHeight(){ document.body.style.setProperty("--dock-h", $("#dock").offsetHeight + 16 + "px"); }
+$("#toggleDock").onclick = () => {
+  const min = $("#dock").classList.toggle("min");
+  $("#toggleDock").textContent = min ? "펼치기" : "접기"; $("#toggleDock").setAttribute("aria-expanded", !min); dockHeight();
+};
+window.addEventListener("resize", dockHeight);
+
+refresh(true).then(dockHeight);
+</script>
+</body>
+</html>

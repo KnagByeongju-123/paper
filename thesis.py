@@ -2,6 +2,7 @@
 
 사용법 (그냥 `python thesis.py` 만 쳐도 메뉴가 나옵니다)
 
+  python thesis.py gui                      # ★ 입력 화면 열기 (브라우저) — 정보·자료·현황 + 하단 Claude 입력란
   python thesis.py init                     # 논문 주제·기본 정보 입력 (질문에 답하기)
   python thesis.py add                      # 자료 추가 (질문에 답하기)
   python thesis.py add 캡처.png --to 3 --section "연구 설계" --caption "연구 모형"
@@ -141,6 +142,57 @@ def yaml_set_topic(text: str, topic: dict) -> str:
     return text.rstrip() + "\n" + header + block
 
 
+PLACEHOLDERS = ("○○", "논문 제목을 입력하세요", "Thesis Title in English", "홍길동", "Gildong Hong")
+
+
+def clean(v) -> str:
+    """예시값(○○, 홍길동 등)은 빈칸으로 본다."""
+    v = str(v or "")
+    return "" if any(p in v for p in PLACEHOLDERS) else v
+
+
+def yaml_set_committee(text: str, members: list[str]) -> str:
+    members = [m.replace('"', "'") for m in members if m.strip()]
+    pat = re.compile(r"^  #? ?committee:.*$", re.M)
+    if members:
+        line = "  committee: [" + ", ".join(f'"{m}"' for m in members) + "]"
+    else:
+        line = '  # committee: ["위원장 ○○○", "위원 ○○○", "위원 ○○○", "위원 ○○○", "위원 ○○○"]   # 박사: 보통 5인'
+    if pat.search(text):
+        return pat.sub(lambda _m: line, text, count=1)
+    return re.sub(r'^(  date:.*)$', lambda m: m.group(1) + "\n" + line, text, count=1, flags=re.M)
+
+
+def write_topic(text: str, topic: dict):
+    """연구 주제를 thesis.yaml 에 쓰고, 주제어→국문초록, 연구문제→1장에 반영."""
+    text = yaml_set_topic(text, topic)
+    YAML_PATH.write_text(text, encoding="utf-8")
+    if topic.get("keywords"):
+        ab = CHAPTER_DIR / "abstract_ko.md"
+        if ab.exists():
+            s = ab.read_text(encoding="utf-8")
+            s = re.sub(r"\*\*주제어:\*\*.*", "**주제어:** " + ", ".join(topic["keywords"]), s)
+            ab.write_text(s, encoding="utf-8")
+    if topic.get("research_questions"):
+        intro = CHAPTER_DIR / "01_introduction.md"
+        if intro.exists() and "[TODO: 연구 문제]" in intro.read_text(encoding="utf-8"):
+            body = "\n".join(f"연구 문제 {i}. {r}  " for i, r in enumerate(topic["research_questions"], 1))
+            insert_text(intro, "연구 문제", body)
+
+
+def save_setup(info: dict, topic: dict, committee: list[str] | None = None):
+    """입력 화면(GUI)에서 받은 값을 한 번에 저장."""
+    text = YAML_PATH.read_text(encoding="utf-8")
+    for key, _label in INFO_FIELDS + [("university_en", "")]:
+        if key in info:
+            text = yaml_set_info(text, key, str(info[key]).strip())
+    if info.get("degree"):
+        text = yaml_set_info(text, "degree_en", "Doctoral Dissertation" if "박" in info["degree"] else "Master's Thesis")
+    if committee is not None:
+        text = yaml_set_committee(text, committee)
+    write_topic(text, topic)
+
+
 def cmd_init(args):
     cfg = load_config()
     info = cfg.info
@@ -182,22 +234,7 @@ def cmd_init(args):
     new_topic["research_questions"] = new_rqs or rqs
     kw = ask("주제어 (쉼표로 구분)", ", ".join(topic.get("keywords", [])))
     new_topic["keywords"] = [k.strip() for k in kw.split(",") if k.strip()]
-    text = yaml_set_topic(text, new_topic)
-    YAML_PATH.write_text(text, encoding="utf-8")
-
-    # 주제어는 국문 초록에도 반영
-    if new_topic["keywords"]:
-        ab = CHAPTER_DIR / "abstract_ko.md"
-        if ab.exists():
-            s = ab.read_text(encoding="utf-8")
-            s = re.sub(r"\*\*주제어:\*\*.*", "**주제어:** " + ", ".join(new_topic["keywords"]), s)
-            ab.write_text(s, encoding="utf-8")
-    # 연구 문제는 서론 1.3 에도 반영 (아직 비어 있을 때만)
-    if new_topic["research_questions"]:
-        intro = CHAPTER_DIR / "01_introduction.md"
-        if intro.exists() and "[TODO: 연구 문제]" in intro.read_text(encoding="utf-8"):
-            body = "\n".join(f"연구 문제 {i}. {r}" + "  " for i, r in enumerate(new_topic["research_questions"], 1))
-            insert_text(intro, "연구 문제", body)
+    write_topic(text, new_topic)
     print("\n✅ thesis.yaml 에 저장했습니다.")
     print("   다음 단계: python thesis.py add  로 자료를 넣거나, Claude 에게 자료를 주세요.")
 
@@ -437,18 +474,34 @@ def cmd_build(args):
     sys.exit(subprocess.run(cmd).returncode)
 
 
+def cmd_gui(args):
+    cmd = [sys.executable, str(ROOT / "scripts" / "gui.py")]
+    if getattr(args, "no_browser", False):
+        cmd.append("--no-browser")
+    if getattr(args, "port", None):
+        cmd += ["--port", str(args.port)]
+    try:
+        subprocess.run(cmd)
+    except KeyboardInterrupt:
+        pass
+
+
 def menu():
     idx = choose("\n📘 학위논문 도우미 — 무엇을 할까요?",
-                 ["논문 주제·기본 정보 입력", "자료 추가 (텍스트·이미지·파일)", "진행 현황 보기", "논문 파일 만들기 (Word+PDF)", "끝내기"])
+                 ["입력 화면 열기 (브라우저)", "논문 주제·기본 정보 입력", "자료 추가 (텍스트·이미지·파일)",
+                  "진행 현황 보기", "논문 파일 만들기 (Word+PDF)", "끝내기"])
     ns = argparse.Namespace(file=None, text=None, to=None, section=None, caption=None, id=None,
                             width="80%", note=None, lead=None, no_pdf=False, force=False)
-    [cmd_init, cmd_add, cmd_status, cmd_build, lambda a: None][idx](ns)
+    [cmd_gui, cmd_init, cmd_add, cmd_status, cmd_build, lambda a: None][idx](ns)
 
 
 def main():
     ap = argparse.ArgumentParser(description="학위논문 도우미", formatter_class=argparse.RawDescriptionHelpFormatter,
                                  epilog=__doc__)
     sub = ap.add_subparsers(dest="cmd")
+    g = sub.add_parser("gui", help="입력 화면 열기 (브라우저)")
+    g.add_argument("--port", type=int, default=8765)
+    g.add_argument("--no-browser", action="store_true")
     sub.add_parser("init", help="논문 주제·기본 정보 입력")
     a = sub.add_parser("add", help="자료 추가 (텍스트·이미지·파일)")
     a.add_argument("file", nargs="?", help="추가할 파일 (이미지·txt·md·docx·pdf …)")
@@ -465,7 +518,7 @@ def main():
     b.add_argument("--no-pdf", action="store_true")
     b.add_argument("--force", action="store_true")
     args = ap.parse_args()
-    {"init": cmd_init, "add": cmd_add, "status": cmd_status, "build": cmd_build,
+    {"gui": cmd_gui, "init": cmd_init, "add": cmd_add, "status": cmd_status, "build": cmd_build,
      None: lambda _a: menu()}[args.cmd](args)
 
 

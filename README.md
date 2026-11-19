@@ -48,11 +48,27 @@ flowchart TB
 
 ## 사용법
 
-모든 작업은 `thesis.py` 하나로 합니다. 그냥 실행하면 번호로 고르는 메뉴가 나옵니다.
+모든 작업은 `thesis.py` 하나로 합니다.
+
+### ★ 가장 쉬운 방법: 입력 화면 열기
 
 ```bash
-python thesis.py
+python thesis.py gui
 ```
+
+브라우저에 **학위논문 작업실** 화면이 열립니다. (끝낼 때는 터미널에서 Ctrl+C)
+
+| 탭 | 하는 일 |
+|----|---------|
+| ① 기본 정보·주제 | 제목·학교·지도교수·심사위원, 연구 주제·방법·연구 문제·주제어 입력 → 저장 |
+| ② 자료 넣기 | **글 직접 입력 / 이미지(캡처를 Ctrl+V 로 붙여넣기·끌어놓기) / 파일** 중 골라서 넣을 장·절 선택 |
+| ③ 진행 현황·만들기 | 장별 글자수·남은 TODO, 검사 결과, **Word+PDF 만들기** 버튼 |
+| 하단 Claude 입력란 | "대기 자료 반영해줘", "2장 초안 써줘" 같은 요청 → Claude 가 원고를 직접 고침 |
+
+하단 Claude 입력란은 내 컴퓨터에 [Claude Code](https://code.claude.com) 가 설치돼 있으면 원고 파일까지 고쳐 주고,
+없으면 `ANTHROPIC_API_KEY` 와 `pip install anthropic` 으로 질문·답변만 할 수 있습니다.
+
+터미널 명령으로 하고 싶으면 아래처럼 해도 됩니다. 그냥 `python thesis.py` 만 치면 번호 메뉴가 나옵니다.
 
 ### 1. 처음 한 번: 주제와 기본 정보 입력
 
@@ -109,7 +125,7 @@ python thesis.py build
 
 ```
 paper/
-├── thesis.py              # ★ 사용자 도구: 주제 입력·자료 추가·현황·빌드
+├── thesis.py              # ★ 사용자 도구: 입력 화면(gui)·주제 입력·자료 추가·현황·빌드
 ├── CLAUDE.md              # Claude 작성 규칙 (핵심)
 ├── thesis.yaml            # 논문 정보·장 순서·양식 설정
 ├── references.bib         # 참고문헌
@@ -120,6 +136,7 @@ paper/
 ├── figures/               #    논문에 실리는 그림
 ├── templates/             #    참고문헌 양식(apa.csl), Word 서식 틀
 ├── scripts/               # ③ 검사·빌드 프로그램
+│   ├── gui.py  gui.html   # 입력 화면 (브라우저)
 │   ├── check.py  build.py  make_reference_docx.py  finalize_lo.py  thesis_lib.py
 └── output/                # ④ 결과물 (git 제외)
 ```
