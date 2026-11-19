@@ -33,6 +33,9 @@ def free_port() -> int:
 def main():
     docx = Path(sys.argv[1]).resolve()
     want_pdf = "--pdf" in sys.argv
+    # 이전 실행이 남긴 잠금 파일(.~lock.*#) 정리
+    for lock in docx.parent.glob(".~lock.*#"):
+        lock.unlink(missing_ok=True)
     soffice = shutil.which("soffice") or shutil.which("libreoffice")
     port = free_port()
     profile = Path(tempfile.mkdtemp(prefix="lo_profile_"))
@@ -67,9 +70,6 @@ def main():
             doc.refresh()
 
         doc.storeToURL(docx.as_uri(), (prop("FilterName", "MS Word 2007 XML"),))
-        if want_pdf:
-            doc.storeToURL(docx.with_suffix(".pdf").as_uri(),
-                           (prop("FilterName", "writer_pdf_Export"),))
         doc.close(True)
         try:
             desktop.terminate()
@@ -80,6 +80,13 @@ def main():
             proc.wait(timeout=15)
         except subprocess.TimeoutExpired:
             proc.kill()
+    # PDF 는 따로 변환한다. (숨김 모드로 연 문서에서 바로 내보내면 수식이 비어 나오는 문제가 있음)
+    try:
+        if want_pdf:
+            subprocess.run([soffice, "--headless", "--norestore", f"-env:UserInstallation={profile.as_uri()}",
+                            "--convert-to", "pdf", "--outdir", str(docx.parent), str(docx)],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=300)
+    finally:
         shutil.rmtree(profile, ignore_errors=True)
 
 

@@ -146,6 +146,7 @@ paper/
 - Python 3.10 이상 → `pip install -r requirements.txt`
 - [pandoc](https://pandoc.org/installing.html) 3.x
 - [LibreOffice](https://www.libreoffice.org/) (목차 쪽번호 채우기·PDF 변환용, 없으면 Word 파일만 생성)
+  - 리눅스는 수식 표시를 위해 `libreoffice-math` 도 설치 (윈도우·맥은 기본 포함)
 - 나눔명조·나눔고딕 글꼴 (다른 글꼴은 `thesis.yaml` 의 `style` 에서 변경)
 
 ## 학교 양식에 맞추기

@@ -12,6 +12,8 @@
     · 아직 [TODO] 가 남아 있음
     · sources/ 에 넣었는데 SOURCES.md 에 기록되지 않은 자료
     · thesis.yaml 에 빠져 있는 장 파일
+    · 인용 없는 문단 (thesis.yaml 에서 cite: true 인 장만 — 서론·이론적 배경·논의)
+      단, "본 연구/본 논문"(자기 연구 설명)과 "여기서"(기호 설명)로 시작하는 문단은 제외
 """
 from __future__ import annotations
 
@@ -24,6 +26,38 @@ from thesis_lib import (  # noqa: E402
     CHAPTER_DIR, CITE_RE, FIG_ID_RE, FIG_RE, ROOT, SOURCE_DIR, TBL_CAP_RE,
     TODO_RE, XREF_RE, iter_body_lines, load_bib_keys, load_config, strip_comments,
 )
+
+
+SKIP_START = ("#", "|", "Table:", ":", "!", "$$", "[TODO", "**[TODO", "연구 문제", "-", "*", ">", "```", "<")
+OWN_WORK = ("본 연구", "본 논문", "여기서", "연구자는")
+
+
+def uncited_paragraphs(text: str):
+    """인용(@키)이 하나도 없는 일반 문단을 찾는다. (줄번호, 문단 앞부분)"""
+    paras, buf, start, in_math = [], [], 0, False
+    for ln, line in iter_body_lines(text):
+        st = line.strip()
+        if st.startswith("$$"):
+            in_math = not in_math if st.count("$$") == 1 else in_math
+            continue
+        if in_math:
+            continue
+        if not st or st.startswith(SKIP_START):
+            if buf:
+                paras.append((start, " ".join(buf)))
+            buf = []
+            continue
+        if not buf:
+            start = ln
+        buf.append(st)
+    if buf:
+        paras.append((start, " ".join(buf)))
+    out = []
+    for ln, p in paras:
+        cites = [k for k in CITE_RE.findall(p) if not k.startswith(("fig:", "tbl:"))]
+        if len(p) >= 40 and not cites and not p.startswith(OWN_WORK):
+            out.append((ln, p))
+    return out
 
 
 def run_checks(verbose: bool = True) -> tuple[list[str], list[str]]:
@@ -74,6 +108,9 @@ def run_checks(verbose: bool = True) -> tuple[list[str], list[str]]:
                     continue
                 if key not in bib_keys:
                     errors.append(f"{where}  references.bib 에 없는 인용: @{key}")
+        if part.cite:
+            for ln, para in uncited_paragraphs(text):
+                warnings.append(f"chapters/{part.file}:{ln}  인용 없는 문단: \"{para[:30]}…\" → [@키] 로 출처 표기 필요")
         stats.append((part.file, chars, todos))
         if todos:
             warnings.append(f"chapters/{part.file}  미완성 [TODO] {todos}곳")

@@ -40,6 +40,7 @@ class Part:
     file: str
     section: str          # front / chapter / back
     numbered: bool = False
+    cite: bool = False    # true 이면 인용 없는 문단을 경고
 
     @property
     def path(self) -> Path:
@@ -70,7 +71,8 @@ def load_config() -> Config:
     for key, section in (("front_matter", "front"), ("chapters", "chapter"), ("back_matter", "back")):
         for item in raw.get(key) or []:
             cfg.parts.append(Part(file=item["file"], section=section,
-                                  numbered=bool(item.get("numbered", False))))
+                                  numbered=bool(item.get("numbered", False)),
+                                  cite=bool(item.get("cite", False))))
     return cfg
 
 

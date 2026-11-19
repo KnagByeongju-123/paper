@@ -100,7 +100,7 @@ INFO_FIELDS = [
     ("title_ko", "논문 제목 (한글)"),
     ("subtitle_ko", "부제 (없으면 Enter)"),
     ("title_en", "논문 제목 (영문)"),
-    ("degree", "학위 (석사/박사)"),
+    ("degree", "학위 (학사/석사/박사)"),
     ("university", "대학원 이름 (예: ○○대학교 대학원)"),
     ("department", "학과"),
     ("major", "전공 (없으면 Enter)"),
@@ -140,6 +140,16 @@ def yaml_set_topic(text: str, topic: dict) -> str:
     text = re.sub(r"\ntopic:\n(?:[ #].*\n?)*", "\n", text)
     header = "\n# =============================================================\n#  연구 주제 (python thesis.py init 으로 입력)\n# =============================================================\n"
     return text.rstrip() + "\n" + header + block
+
+
+DEGREE_EN = {"학사": "Bachelor's Thesis", "석사": "Master's Thesis", "박사": "Doctoral Dissertation"}
+
+
+def degree_en(degree: str) -> str:
+    for k, v in DEGREE_EN.items():
+        if k in degree:
+            return v
+    return "Thesis"
 
 
 PLACEHOLDERS = ("○○", "논문 제목을 입력하세요", "Thesis Title in English", "홍길동", "Gildong Hong")
@@ -187,7 +197,7 @@ def save_setup(info: dict, topic: dict, committee: list[str] | None = None):
         if key in info:
             text = yaml_set_info(text, key, str(info[key]).strip())
     if info.get("degree"):
-        text = yaml_set_info(text, "degree_en", "Doctoral Dissertation" if "박" in info["degree"] else "Master's Thesis")
+        text = yaml_set_info(text, "degree_en", degree_en(info["degree"]))
     if committee is not None:
         text = yaml_set_committee(text, committee)
     write_topic(text, topic)
@@ -208,7 +218,7 @@ def cmd_init(args):
         val = ask(label, cur_disp)
         if key == "degree" and val:
             val = val.replace("학위", "")
-            text = yaml_set_info(text, "degree_en", "Doctoral Dissertation" if "박" in val else "Master's Thesis")
+            text = yaml_set_info(text, "degree_en", degree_en(val))
         if val or key in ("subtitle_ko", "major"):
             text = yaml_set_info(text, key, val)
     uni = re.search(r'^  university:\s*"([^"]*)"', text, re.M)

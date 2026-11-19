@@ -63,6 +63,12 @@
       </term>
     </terms>
   </locale>
+  <!-- 국내 학위논문 관례: 3인 이상 저자는 "외" (예: Marciniak 외, 2002) -->
+  <locale xml:lang="ko-KR">
+    <terms>
+      <term name="et-al">외</term>
+    </terms>
+  </locale>
   <locale xml:lang="da">
     <terms>
       <term name="et-al">et al.</term>
