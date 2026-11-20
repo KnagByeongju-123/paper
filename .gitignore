@@ -4,3 +4,6 @@ __pycache__/
 ~$*
 .~lock*
 templates/reference.docx
+# 성형해석(mold_sold) 임시 파일 — 결과(json·csv·png·gif)만 보관
+sources/data/fa_round_cup/**/_f*.png
+sources/data/fa_round_cup/**/*.pkl
