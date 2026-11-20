@@ -1,0 +1,76 @@
+# =============================================================
+#  논문 기본 정보 (표지·초록·목차·본문 구성을 여기서 정합니다)
+#  - 값만 바꾸면 됩니다. 들여쓰기(앞 공백)는 그대로 두세요.
+# =============================================================
+
+info:
+  title_ko: "판재 성형 시 재질별 성형해석을 통한 펀치·다이 간극 및 치수 결정에 관한 연구"
+  subtitle_ko: ""                      # 부제 (없으면 비워두기)
+  title_en: "A Study on the Determination of Punch-Die Clearance and Tool Dimensions by Material Using Sheet Metal Forming Analysis"
+  degree: "박사"                        # 학사 / 석사 / 박사  (바꾸면 표지·작성 기준이 자동으로 바뀜)
+  degree_en: "Doctoral Dissertation"
+  university: "○○대학교 대학원"
+  university_en: "Graduate School, ○○ University"
+  department: "○○학과"
+  major: "○○전공"
+  author: "홍길동"
+  author_en: "Gildong Hong"
+  advisor: "○○○ 교수"
+  date: "2027년 2월"                    # 표지에 찍히는 날짜
+  # 인준지(심사위원 서명 페이지)가 필요하면 앞의 # 을 지우고 이름 입력
+  # committee: ["위원장 ○○○", "위원 ○○○", "위원 ○○○", "위원 ○○○", "위원 ○○○"]   # 박사: 보통 5인
+
+# 본문 구성: 위에서부터 차례대로 논문에 들어갑니다.
+#   file     : chapters/ 안의 파일 이름
+#   numbered : true 이면 "제1장, 1.1, 1.1.1" 식으로 자동 번호
+#   cite     : true 이면 인용([@키])이 없는 문단을 검사에서 경고
+front_matter:
+  - { file: abstract_ko.md }            # 국문 초록 (목차 앞)
+
+chapters:
+  - { file: 01_introduction.md,   numbered: true, cite: true }   # 서론
+  - { file: 02_literature.md,     numbered: true, cite: true }   # 이론적 배경 / 선행연구
+  - { file: 03_method.md,         numbered: true }   # 연구 방법
+  - { file: 04_results.md,        numbered: true }   # 연구 결과
+  - { file: 05_discussion.md,     numbered: true, cite: true }   # 논의
+  - { file: 06_conclusion.md,     numbered: true }   # 결론
+
+back_matter:
+  - { file: abstract_en.md }            # 영문 초록 (참고문헌 뒤)
+
+# 출력 형식 설정
+format:
+  output_name: "thesis"                 # output/thesis.docx, output/thesis.pdf
+  pdf: true                             # PDF도 만들지 여부
+  toc: true                             # 목차
+  list_of_figures: true                 # 그림 목차
+  list_of_tables: true                  # 표 목차
+  csl: templates/apa.csl                # 참고문헌 양식 (APA 7판)
+  bibliography: references.bib
+  # 그림/표 번호 형식: {chapter}=장 번호, {n}=장 안에서의 순번
+  figure_label: "그림 {chapter}-{n}"
+  table_label: "표 {chapter}-{n}"
+  chapter_label: "제{n}장"
+
+# 페이지·글꼴 (대부분의 대학원 기본 양식 기준, 학교 규정에 맞게 수정)
+style:
+  paper: A4
+  margin_cm: { top: 3.0, bottom: 2.5, left: 3.0, right: 2.5 }
+  body_font: "NanumMyeongjo"            # 본문 글꼴 (Word에서는 '바탕' 등으로 바꿔도 됨)
+  heading_font: "NanumGothic"           # 제목 글꼴
+  body_size_pt: 11
+  line_spacing: 1.6                     # 줄 간격 (배수)
+
+# =============================================================
+#  연구 주제 (python thesis.py init 으로 입력)
+# =============================================================
+topic:
+  # 연구 주제 정보 — Claude 가 원고를 쓸 때 방향을 잡는 기준
+  summary: "판재 프레스 성형(블랭킹·피어싱·드로잉)에서 재질별 성형해석(유한요소해석)을 통해 전단면 품질과 성형성을 만족하는 적정 펀치·다이 간극과 공구 치수를 결정하는 이론적 기준을 제시한다."
+  field: "기계공학 - 소성가공·금형설계"
+  method: "유한요소 성형해석(FEM) + 시험 성형을 통한 검증"
+  research_questions:
+    - "재질(냉연강판, 스테인리스강, 알루미늄 합금)에 따라 전단면 품질(처짐·전단면·파단면·버)을 가장 좋게 하는 펀치·다이 간극은 어떻게 달라지는가?"
+    - "재질의 기계적 성질(인장강도, 연신율, 가공경화지수)과 적정 간극 사이에는 어떤 정량적 관계가 있는가?"
+    - "성형해석 결과를 바탕으로 블랭킹·피어싱·드로잉 공정의 펀치·다이 치수를 결정하는 설계 기준식을 제시할 수 있는가?"
+  keywords: ["펀치-다이 간극", "클리어런스", "성형해석", "유한요소법", "전단가공", "금형 설계"]

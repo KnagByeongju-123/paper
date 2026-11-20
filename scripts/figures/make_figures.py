@@ -42,7 +42,9 @@ def font(size: int, bold: bool = False):
 
 
 def blender_exe() -> str:
-    exe = os.environ.get("BLENDER") or shutil.which("blender")
+    sys.path.insert(0, str(HERE.parent))
+    from thesis_lib import find_tool
+    exe = find_tool("blender")
     if not exe:
         raise SystemExit("❌ Blender 를 찾지 못했습니다. 설치 후 다시 실행하거나 BLENDER 환경변수에 경로를 넣어 주세요.")
     return exe

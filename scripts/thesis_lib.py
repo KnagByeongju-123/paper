@@ -97,3 +97,70 @@ def load_bib_keys(bib_path: Path) -> set[str]:
         return set()
     text = bib_path.read_text(encoding="utf-8")
     return set(re.findall(r"@\w+\s*\{\s*([^,\s]+)\s*,", text))
+
+
+# ---- 외부 프로그램 찾기 (윈도우·맥은 PATH 에 없는 경우가 많아 기본 설치 위치도 확인) ----
+import os as _os
+import shutil as _shutil
+import subprocess as _subprocess
+import sys as _sys
+
+_TOOL_PATHS = {
+    "soffice": [
+        r"C:\Program Files\LibreOffice\program\soffice.exe",
+        r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+        "/Applications/LibreOffice.app/Contents/MacOS/soffice",
+    ],
+    "blender": [
+        r"C:\Program Files\Blender Foundation\Blender 4.2\blender.exe",
+        r"C:\Program Files\Blender Foundation\Blender 4.1\blender.exe",
+        r"C:\Program Files\Blender Foundation\Blender 4.0\blender.exe",
+        "/Applications/Blender.app/Contents/MacOS/Blender",
+    ],
+    "pandoc": [
+        _os.path.expandvars(r"%LOCALAPPDATA%\Pandoc\pandoc.exe"),
+        r"C:\Program Files\Pandoc\pandoc.exe",
+        "/opt/homebrew/bin/pandoc", "/usr/local/bin/pandoc",
+    ],
+}
+
+
+def find_tool(name: str) -> str | None:
+    """pandoc / soffice / blender 실행 파일 경로. 환경변수(PANDOC, SOFFICE, BLENDER)가 있으면 우선."""
+    env = _os.environ.get(name.upper())
+    if env and Path(env).exists():
+        return env
+    for cand in ([name] + (["libreoffice"] if name == "soffice" else [])):
+        found = _shutil.which(cand)
+        if found:
+            return found
+    if name == "blender" and _sys.platform.startswith("win"):
+        base = Path(r"C:\Program Files\Blender Foundation")
+        if base.exists():
+            hits = sorted(base.glob("Blender*/blender.exe"))
+            if hits:
+                return str(hits[-1])
+    for p in _TOOL_PATHS.get(name, []):
+        if p and Path(p).exists():
+            return p
+    return None
+
+
+def uno_python() -> str | None:
+    """LibreOffice 를 조종하는 'uno' 모듈을 쓸 수 있는 파이썬.
+    리눅스는 보통 시스템 파이썬, 윈도우·맥은 LibreOffice 에 들어 있는 파이썬을 써야 한다."""
+    cands = [_sys.executable, "/usr/bin/python3"]   # 리눅스: apt 의 python3-uno 는 시스템 파이썬용
+    soffice = find_tool("soffice")
+    if soffice:
+        prog = Path(soffice).resolve().parent
+        cands += [str(prog / "python.exe"), str(prog / "python"),
+                  str(prog.parent / "Resources" / "python")]       # 맥
+    for py in cands:
+        if Path(py).exists():
+            try:
+                r = _subprocess.run([py, "-c", "import uno"], capture_output=True, timeout=30)
+                if r.returncode == 0:
+                    return py
+            except (OSError, _subprocess.TimeoutExpired):
+                pass
+    return None

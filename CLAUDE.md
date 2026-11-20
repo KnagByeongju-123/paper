@@ -27,6 +27,12 @@ sources/ (글·캡처·PDF·데이터) ─▶ chapters/*.md + figures/ ─▶ sc
 
 ---
 
+## 1-0. 포크·템플릿으로 받은 경우
+
+- 처음엔 샘플 원고가 들어 있다. 사용자가 자기 논문을 시작하면 `python thesis.py new --yes` 로 빈 뼈대로 바꾼다(샘플은 `examples/sample-punch-die/` 에 보존).
+- `templates/skeleton/`(빈 뼈대)과 `examples/`(샘플)는 작업 중에 고치지 않는다. 원고는 항상 `chapters/` 에서 쓴다.
+- push 하면 `.github/workflows/build-thesis.yml` 이 GitHub 에서 PDF 를 만든다(Actions → Artifacts). 검사에서 ❌ 오류가 나면 빌드가 실패하니 push 전에 `python scripts/check.py` 로 확인한다.
+
 ## 1-1. 연구 주제 (thesis.yaml → `topic:`)
 
 - 사용자가 `python thesis.py init` 으로 입력한 **주제 요약·분야·연구 방법·연구 문제·주제어**가 `thesis.yaml` 맨 아래 `topic:` 에 있다.

@@ -1,7 +1,46 @@
-# 박사학위논문 자동 구성 시스템
+# 학위논문 자동 구성 시스템 (학사·석사·박사)
 
 자료(메모·캡처·PDF·데이터)를 넣으면 **Claude가 규칙([CLAUDE.md](CLAUDE.md))에 따라 원고를 쓰고**,
 **파이썬이 표지·목차·번호·참고문헌까지 갖춘 Word/PDF 논문으로 조립**합니다.
+
+> 지금 들어 있는 원고는 **샘플**(재질별 펀치·다이 간극 연구)입니다. 샘플 원본은 [`examples/sample-punch-die/`](examples/sample-punch-die/) 에도 보관돼 있습니다.
+
+## 내 논문으로 쓰기 (Fork / Template)
+
+### 1. 내 저장소로 복사하기
+
+| 방법 | 언제 | 비공개 가능? |
+|------|------|:---:|
+| **Use this template** (추천) | 내 논문을 따로 관리할 때. 이력이 깨끗하게 새로 시작 | ✅ |
+| **Fork** | 이 시스템 자체를 고쳐서 원 저장소에 기여하고 싶을 때 | ❌ (공개 저장소의 포크는 공개) |
+
+> ⚠️ **심사 전 논문은 비공개로 두는 것을 권장**합니다. 공개 저장소를 포크하면 포크도 공개이므로, 논문용이라면 **Use this template → Private** 를 고르세요.
+> (저장소 주인이 Settings → General → **Template repository** 를 켜 두어야 버튼이 보입니다.)
+
+### 2. 샘플 지우고 빈 논문으로 시작
+
+```bash
+python thesis.py new
+```
+
+→ 샘플 원고·그림·자료가 지워지고 빈 6장 뼈대가 준비됩니다. 샘플을 다시 보고 싶으면 `python thesis.py example`.
+
+### 3. 쓰는 방법 — 둘 중 편한 것
+
+| | 내 컴퓨터에서 | GitHub 에서만 (설치 없음) |
+|---|---|---|
+| 준비 | pandoc · LibreOffice · Python 설치 (아래 [설치](#설치-내-컴퓨터에서-돌릴-때)) | 없음 |
+| 정보 입력 | `python thesis.py gui` 화면 | `thesis.yaml` 을 GitHub 웹에서 연필 아이콘으로 수정 |
+| 원고 쓰기 | 화면 하단 Claude 입력란 / Claude Code | `chapters/*.md` 를 웹에서 수정, 또는 [claude.ai/code](https://claude.ai/code) 에서 저장소를 열고 요청 |
+| PDF 받기 | `python thesis.py build` → `output/` | push 하면 자동 빌드 → **Actions 탭 → 실행 기록 → Artifacts 의 `thesis`** 내려받기 |
+
+> 포크·템플릿으로 만든 저장소는 처음에 Actions 가 꺼져 있을 수 있습니다. **Actions 탭에서 "I understand my workflows… enable"** 을 한 번 눌러 주세요.
+
+### 4. 학교 양식 맞추기
+
+- `thesis.yaml` → `style`(용지·여백·글꼴·줄간격), `format`(그림·표 번호 형식, 참고문헌 양식 `csl`)
+- 학위: `info.degree` 를 `학사` / `석사` / `박사` 로 → 표지·작성 기준 자동 변경
+- 참고문헌 양식: [Zotero 스타일 목록](https://www.zotero.org/styles) 에서 `.csl` 을 받아 `templates/` 에 넣고 `csl:` 경로만 변경
 
 ## 전체 흐름
 
@@ -150,7 +189,9 @@ paper/
 │   ├── notes/ images/ papers/ data/
 ├── chapters/              # ② 장별 원고 (Markdown)
 ├── figures/               #    논문에 실리는 그림 (scripts/figures/ 로 생성)
-├── templates/             #    참고문헌 양식(apa.csl), Word 서식 틀
+├── templates/             #    참고문헌 양식(apa.csl), Word 서식 틀, skeleton/(빈 논문 뼈대)
+├── examples/              #    샘플 논문 (sample-punch-die: 재질별 펀치·다이 간극)
+├── .github/workflows/     #    push 하면 GitHub 에서 PDF 자동 생성
 ├── scripts/               # ③ 검사·빌드 프로그램
 │   ├── gui.py  gui.html   # 입력 화면 (브라우저)
 │   ├── check.py  build.py  make_reference_docx.py  finalize_lo.py  thesis_lib.py

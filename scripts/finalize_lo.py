@@ -36,7 +36,8 @@ def main():
     # 이전 실행이 남긴 잠금 파일(.~lock.*#) 정리
     for lock in docx.parent.glob(".~lock.*#"):
         lock.unlink(missing_ok=True)
-    soffice = shutil.which("soffice") or shutil.which("libreoffice")
+    soffice = (sys.argv[sys.argv.index("--soffice") + 1] if "--soffice" in sys.argv else None) \
+        or shutil.which("soffice") or shutil.which("libreoffice")
     port = free_port()
     profile = Path(tempfile.mkdtemp(prefix="lo_profile_"))
     proc = subprocess.Popen(

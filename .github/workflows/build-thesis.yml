@@ -1,0 +1,52 @@
+# 원고를 고쳐서 push 하면 GitHub 이 논문(Word·PDF)을 자동으로 만듭니다.
+# 결과 받기: 저장소 → Actions 탭 → 가장 위 실행 기록 → 아래 Artifacts 의 "thesis" 내려받기
+name: 논문 PDF 만들기
+
+on:
+  push:
+    paths:
+      - "chapters/**"
+      - "figures/**"
+      - "thesis.yaml"
+      - "references.bib"
+      - "templates/**"
+      - "scripts/**"
+      - ".github/workflows/build-thesis.yml"
+  workflow_dispatch:   # Actions 탭에서 "Run workflow" 버튼으로 직접 실행
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: 저장소 내려받기
+        uses: actions/checkout@v4
+
+      - name: 도구 설치 (pandoc · LibreOffice · 한글 글꼴)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pandoc libreoffice-writer libreoffice-math python3-uno \
+            fonts-nanum python3-yaml python3-docx
+
+      - name: 원고 검사
+        run: |
+          echo '## 원고 검사 결과' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          /usr/bin/python3 scripts/check.py | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 논문 만들기 (Word + PDF)
+        run: /usr/bin/python3 scripts/build.py
+
+      - name: 결과 올리기
+        uses: actions/upload-artifact@v4
+        with:
+          name: thesis
+          path: |
+            output/*.pdf
+            output/*.docx
+          if-no-files-found: error

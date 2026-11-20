@@ -114,7 +114,9 @@ def build_reference_docx() -> Path:
     TEMPLATE_DIR.mkdir(exist_ok=True)
     base = TEMPLATE_DIR / "_pandoc_default.docx"
     with open(base, "wb") as fh:
-        subprocess.run(["pandoc", "--print-default-data-file", "reference.docx"], stdout=fh, check=True)
+        from thesis_lib import find_tool
+        subprocess.run([find_tool("pandoc") or "pandoc", "--print-default-data-file", "reference.docx"],
+                       stdout=fh, check=True)
     doc = Document(str(base))
 
     # --- 용지와 여백

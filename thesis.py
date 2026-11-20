@@ -2,6 +2,8 @@
 
 사용법 (그냥 `python thesis.py` 만 쳐도 메뉴가 나옵니다)
 
+  python thesis.py new                      # ★ 포크 후 처음 한 번: 샘플을 지우고 빈 논문으로 시작
+  python thesis.py example                  # 샘플 논문(펀치·다이 간극)으로 되돌리기 — 구경용
   python thesis.py gui                      # ★ 입력 화면 열기 (브라우저) — 정보·자료·현황 + 하단 Claude 입력란
   python thesis.py init                     # 논문 주제·기본 정보 입력 (질문에 답하기)
   python thesis.py add                      # 자료 추가 (질문에 답하기)
@@ -484,6 +486,64 @@ def cmd_build(args):
     sys.exit(subprocess.run(cmd).returncode)
 
 
+SKELETON = ROOT / "templates" / "skeleton"
+EXAMPLE = ROOT / "examples" / "sample-punch-die"
+WORK_DIRS = ["notes", "images", "papers", "data"]
+
+
+def _clear_work():
+    """현재 원고·그림·자료를 비운다 (.gitkeep 은 남김)."""
+    for f in CHAPTER_DIR.glob("*.md"):
+        f.unlink()
+    for f in FIG_DIR.glob("*"):
+        if f.is_file() and f.name != ".gitkeep":
+            f.unlink()
+    for d in WORK_DIRS:
+        for f in (SOURCE_DIR / d).glob("*"):
+            if f.is_file() and f.name != ".gitkeep":
+                f.unlink()
+
+
+def _confirm(args, what: str) -> bool:
+    if getattr(args, "yes", False):
+        return True
+    print(f"⚠️  {what}")
+    print("   지금 chapters/ · figures/ · sources/ · thesis.yaml · references.bib 의 내용이 바뀝니다.")
+    print("   (git 으로 관리 중이면 커밋 기록에서 되살릴 수 있습니다.)")
+    return ask("계속할까요? (y/n)", "n").lower().startswith("y")
+
+
+def cmd_new(args):
+    """포크한 사람이 처음 한 번 실행: 빈 논문 뼈대로 시작."""
+    if not _confirm(args, "샘플 내용을 지우고 빈 논문으로 시작합니다."):
+        print("취소했습니다.")
+        return
+    _clear_work()
+    shutil.copytree(SKELETON / "chapters", CHAPTER_DIR, dirs_exist_ok=True)
+    shutil.copy2(SKELETON / "thesis.yaml", YAML_PATH)
+    shutil.copy2(SKELETON / "references.bib", ROOT / "references.bib")
+    shutil.copy2(SKELETON / "SOURCES.md", MANIFEST)
+    print("✅ 빈 논문으로 준비했습니다. (샘플은 examples/sample-punch-die/ 에 그대로 있습니다)")
+    print("   다음: python thesis.py gui  (또는 python thesis.py init) 로 제목·주제를 입력하세요.")
+
+
+def cmd_example(args):
+    """샘플 논문으로 되돌리기 (구경용)."""
+    if not _confirm(args, "현재 내용을 샘플 논문(펀치·다이 간극)으로 바꿉니다."):
+        print("취소했습니다.")
+        return
+    _clear_work()
+    shutil.copytree(EXAMPLE / "chapters", CHAPTER_DIR, dirs_exist_ok=True)
+    shutil.copytree(EXAMPLE / "figures", FIG_DIR, dirs_exist_ok=True)
+    for d in ("notes", "data"):
+        if (EXAMPLE / "sources" / d).exists():
+            shutil.copytree(EXAMPLE / "sources" / d, SOURCE_DIR / d, dirs_exist_ok=True)
+    shutil.copy2(EXAMPLE / "sources" / "SOURCES.md", MANIFEST)
+    shutil.copy2(EXAMPLE / "thesis.yaml", YAML_PATH)
+    shutil.copy2(EXAMPLE / "references.bib", ROOT / "references.bib")
+    print("✅ 샘플 논문으로 바꿨습니다. python thesis.py build 로 PDF 를 만들어 보세요.")
+
+
 def cmd_gui(args):
     cmd = [sys.executable, str(ROOT / "scripts" / "gui.py")]
     if getattr(args, "no_browser", False):
@@ -509,6 +569,9 @@ def main():
     ap = argparse.ArgumentParser(description="학위논문 도우미", formatter_class=argparse.RawDescriptionHelpFormatter,
                                  epilog=__doc__)
     sub = ap.add_subparsers(dest="cmd")
+    for name, hlp in (("new", "샘플을 지우고 빈 논문으로 시작 (포크 후 처음 한 번)"), ("example", "샘플 논문으로 되돌리기")):
+        sp = sub.add_parser(name, help=hlp)
+        sp.add_argument("--yes", action="store_true", help="묻지 않고 바로 실행")
     g = sub.add_parser("gui", help="입력 화면 열기 (브라우저)")
     g.add_argument("--port", type=int, default=8765)
     g.add_argument("--no-browser", action="store_true")
@@ -528,7 +591,7 @@ def main():
     b.add_argument("--no-pdf", action="store_true")
     b.add_argument("--force", action="store_true")
     args = ap.parse_args()
-    {"gui": cmd_gui, "init": cmd_init, "add": cmd_add, "status": cmd_status, "build": cmd_build,
+    {"new": cmd_new, "example": cmd_example, "gui": cmd_gui, "init": cmd_init, "add": cmd_add, "status": cmd_status, "build": cmd_build,
      None: lambda _a: menu()}[args.cmd](args)
 
 

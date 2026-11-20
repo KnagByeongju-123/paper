@@ -279,7 +279,11 @@ def split_sections(docx_path: Path):
 
 def run_pandoc(cfg: Config, md_path: Path, docx_path: Path, ref_docx: Path):
     f = cfg.fmt
-    cmd = ["pandoc", str(md_path), "-f", "markdown", "-t", "docx",
+    from thesis_lib import find_tool
+    pandoc = find_tool("pandoc")
+    if not pandoc:
+        raise SystemExit("❌ pandoc 이 없습니다. python thesis.py setup 으로 설치 방법을 확인하세요.")
+    cmd = [pandoc, str(md_path), "-f", "markdown", "-t", "docx",
            "-o", str(docx_path), f"--reference-doc={ref_docx}",
            f"--resource-path={ROOT}", "--metadata", "lang=ko-KR",
            "--metadata", "link-citations=true"]
@@ -293,15 +297,23 @@ def run_pandoc(cfg: Config, md_path: Path, docx_path: Path, ref_docx: Path):
 
 
 def finalize_with_libreoffice(docx_path: Path, make_pdf: bool) -> bool:
-    soffice = shutil.which("soffice") or shutil.which("libreoffice")
+    from thesis_lib import find_tool, uno_python
+    soffice = find_tool("soffice")
     if not soffice:
-        print("⚠️  LibreOffice 가 없어 목차 쪽번호 채우기·PDF 변환을 건너뜁니다.")
+        print("⚠️  LibreOffice 가 없어 목차 쪽번호 채우기·PDF 변환을 건너뜁니다. (python thesis.py setup 참고)")
         return False
-    cmd = [sys.executable, str(Path(__file__).with_name("finalize_lo.py")), str(docx_path)]
+    py = uno_python()
+    if py:
+        cmd = [py, str(Path(__file__).with_name("finalize_lo.py")), str(docx_path), "--soffice", soffice]
+        if make_pdf:
+            cmd.append("--pdf")
+        return subprocess.run(cmd).returncode == 0
+    # uno 를 못 쓰면: 목차 쪽번호는 Word 에서 F9 로 갱신, PDF 만 변환
+    print("⚠️  LibreOffice 연결 모듈(uno)을 찾지 못해 목차 쪽번호 자동 채우기를 건너뜁니다. Word 에서 목차를 눌러 F9 로 갱신하세요.")
     if make_pdf:
-        cmd.append("--pdf")
-    r = subprocess.run(cmd)
-    return r.returncode == 0
+        subprocess.run([soffice, "--headless", "--convert-to", "pdf", "--outdir", str(docx_path.parent), str(docx_path)],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return True
 
 
 def main():
