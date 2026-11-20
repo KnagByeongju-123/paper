@@ -1,0 +1,24 @@
+{
+ "thickness": 1.0,
+ "r_outer": 30.0,
+ "r_tool": 34.0,
+ "material": {
+  "K": 1275.0,
+  "n": 0.45,
+  "eps0": 0.034,
+  "m": 0.05
+ },
+ "stages": [
+  "1_forming"
+ ],
+ "labels": {
+  "1_forming": "Round cup, SUS304, k = 0.05"
+ },
+ "pads": {},
+ "mesh_by_stage": {},
+ "mesh_size": 0.25,
+ "step": 0.05,
+ "friction": 0.1,
+ "edge": "slide",
+ "min_tool_radius": 2.5
+}

@@ -1,0 +1,23 @@
+[
+ {
+  "stage": "1_forming",
+  "label": "Round cup, SUS304, k = 0.05",
+  "punch_stroke_mm": 7.02,
+  "die_rise_mm": 0.0,
+  "max_load_kN": 509.3,
+  "max_thinning_percent": 19.2,
+  "r_at_max_thinning_mm": 11.65,
+  "max_thickening_percent": 0.3,
+  "min_thickness_mm": 0.808,
+  "max_effective_strain": 0.309,
+  "min_hoop_strain": -0.1255,
+  "r_at_min_hoop_mm": 13.16,
+  "stroke_done_mm": 7.02,
+  "outer_radius_mm": 29.163,
+  "inverted_elements": 0,
+  "volume_error_percent": -1.521,
+  "stopped_by_press_capacity": false,
+  "stalled": false,
+  "elapsed_s": 121.7
+ }
+]

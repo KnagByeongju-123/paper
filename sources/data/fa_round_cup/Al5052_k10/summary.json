@@ -1,0 +1,23 @@
+[
+ {
+  "stage": "1_forming",
+  "label": "Round cup, Al5052, k = 0.10",
+  "punch_stroke_mm": 7.02,
+  "die_rise_mm": 0.0,
+  "max_load_kN": 320.7,
+  "max_thinning_percent": 24.4,
+  "r_at_max_thinning_mm": 11.33,
+  "max_thickening_percent": -0.0,
+  "min_thickness_mm": 0.756,
+  "max_effective_strain": 0.361,
+  "min_hoop_strain": -0.1196,
+  "r_at_min_hoop_mm": 13.55,
+  "stroke_done_mm": 7.02,
+  "outer_radius_mm": 29.224,
+  "inverted_elements": 0,
+  "volume_error_percent": -1.329,
+  "stopped_by_press_capacity": false,
+  "stalled": false,
+  "elapsed_s": 121.9
+ }
+]

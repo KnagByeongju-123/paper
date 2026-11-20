@@ -1,0 +1,21 @@
+{
+ "stage": "1_forming",
+ "label": "Round cup, SPCC, k = 0.20",
+ "punch_stroke_mm": 7.02,
+ "die_rise_mm": 0.0,
+ "max_load_kN": 85.3,
+ "max_thinning_percent": 21.6,
+ "r_at_max_thinning_mm": 11.3,
+ "max_thickening_percent": -0.0,
+ "min_thickness_mm": 0.784,
+ "max_effective_strain": 0.34,
+ "min_hoop_strain": -0.1207,
+ "r_at_min_hoop_mm": 13.41,
+ "stroke_done_mm": 7.02,
+ "outer_radius_mm": 29.164,
+ "inverted_elements": 0,
+ "volume_error_percent": -2.073,
+ "stopped_by_press_capacity": false,
+ "stalled": false,
+ "elapsed_s": 112.9
+}
