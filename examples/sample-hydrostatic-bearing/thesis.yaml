@@ -1,0 +1,77 @@
+# =============================================================
+#  논문 기본 정보 (표지·초록·목차·본문 구성을 여기서 정합니다)
+#  - 값만 바꾸면 됩니다. 들여쓰기(앞 공백)는 그대로 두세요.
+# =============================================================
+
+info:
+  title_ko: "초정밀 이송계용 오일 정압 패드 베어링의 설계 및 강성 해석에 관한 연구"
+  subtitle_ko: "볼 레이스웨이 및 공기 정압 방식과의 비교를 중심으로"                      # 부제 (없으면 비워두기)
+  title_en: "Design and Stiffness Analysis of Oil Hydrostatic Pad Bearings for Ultra-Precision Feed Systems"
+  degree: "박사"                        # 학사 / 석사 / 박사  (바꾸면 표지·작성 기준이 자동으로 바뀜)
+  degree_en: "Doctoral Dissertation"
+  university: "○○대학교 대학원"
+  university_en: "Graduate School, ○○ University"
+  department: "○○학과"
+  major: "○○전공"
+  author: "홍길동"
+  author_en: "Gildong Hong"
+  advisor: "○○○ 교수"
+  date: "2027년 2월"                    # 표지에 찍히는 날짜
+  # 인준지(심사위원 서명 페이지)가 필요하면 앞의 # 을 지우고 이름 입력
+  # committee: ["위원장 ○○○", "위원 ○○○", "위원 ○○○", "위원 ○○○", "위원 ○○○"]   # 박사: 보통 5인
+
+# 본문 구성: 위에서부터 차례대로 논문에 들어갑니다.
+#   file     : chapters/ 안의 파일 이름
+#   numbered : true 이면 "제1장, 1.1, 1.1.1" 식으로 자동 번호
+#   cite     : true 이면 인용([@키])이 없는 문단을 검사에서 경고
+front_matter:
+  - { file: abstract_ko.md }            # 국문 초록 (목차 앞)
+
+chapters:
+  - { file: 01_introduction.md,   numbered: true, cite: true }   # 서론
+  - { file: 02_literature.md,     numbered: true, cite: true }   # 이론적 배경 / 선행연구
+  - { file: 03_method.md,         numbered: true }   # 연구 방법
+  - { file: 04_results.md,        numbered: true }   # 연구 결과
+  - { file: 05_discussion.md,     numbered: true, cite: true }   # 논의
+  - { file: 06_conclusion.md,     numbered: true }   # 결론
+
+back_matter:
+  - { file: abstract_en.md }            # 영문 초록 (참고문헌 뒤)
+
+# 출력 형식 설정
+format:
+  output_name: "thesis"                 # output/thesis.docx, output/thesis.pdf
+  pdf: true                             # PDF도 만들지 여부
+  toc: true                             # 목차
+  list_of_figures: true                 # 그림 목차
+  list_of_tables: true                  # 표 목차
+  csl: templates/apa.csl                # 참고문헌 양식 (APA 7판)
+  bibliography: references.bib
+  bib_order: korean-first              # 참고문헌: korean-first(국내 먼저) / style(양식 기본 순서)
+  # 그림/표 번호 형식: {chapter}=장 번호, {n}=장 안에서의 순번
+  figure_label: "그림 {chapter}-{n}"
+  table_label: "표 {chapter}-{n}"
+  chapter_label: "제{n}장"
+
+# 페이지·글꼴 (대부분의 대학원 기본 양식 기준, 학교 규정에 맞게 수정)
+style:
+  paper: A4
+  margin_cm: { top: 3.0, bottom: 2.5, left: 3.0, right: 2.5 }
+  body_font: "NanumMyeongjo"            # 본문 글꼴 (Word에서는 '바탕' 등으로 바꿔도 됨)
+  heading_font: "NanumGothic"           # 제목 글꼴
+  body_size_pt: 11
+  line_spacing: 1.6                     # 줄 간격 (배수)
+
+# =============================================================
+#  연구 주제 (python thesis.py init 으로 입력)
+# =============================================================
+topic:
+  # 연구 주제 정보 — Claude 가 원고를 쓸 때 방향을 잡는 기준
+  summary: "볼 레이스웨이(구름) 안내면과 공기 정압 베어링이 주로 쓰이는 초정밀 이송계에 오일 정압 패드 베어링을 적용하기 위해, 모세관 리스트릭터를 갖는 원형 리세스 패드의 부하 용량·강성·유량을 이론적으로 해석하고 설계 기준을 제시한다."
+  field: "기계공학 - 트라이볼로지·정밀기계설계"
+  method: "윤활 이론(레이놀즈 방정식) 기반 해석 + 설계 변수 민감도 분석 (CFD·실험 검증 예정)"
+  research_questions:
+    - "오일 정압 패드의 부하 용량과 강성은 공급 압력과 막 두께에 따라 어떻게 변하는가?"
+    - "모세관 리스트릭터의 설계 압력비는 강성을 최대로 하기 위해 어떻게 정해야 하는가?"
+    - "오일 정압 방식은 볼 레이스웨이·공기 정압 방식과 비교하여 강성·감쇠·소요 동력 측면에서 어떤 장단점을 갖는가?"
+  keywords: ["정압 베어링", "오일 정압", "모세관 리스트릭터", "막 강성", "레이놀즈 방정식", "초정밀 이송계"]

@@ -121,15 +121,57 @@ def make_sheared_edge(a):
     print(f"✅ 저장: {out.relative_to(ROOT)}")
 
 
+def label_column(img, an, names, a, note, out_name, col_ratio=0.98, widen=1.38):
+    """렌더 오른쪽에 라벨 열을 두고 지시선으로 연결 (여백 자동 정리 포함)."""
+    s = a.w / 900
+    box = ImageChops.difference(img, Image.new("RGB", img.size, "white")).point(lambda v: 255 if v > 8 else 0).getbbox()
+    if box:
+        top, bot = max(0, box[1] - int(40 * s)), min(img.height, box[3] + int(70 * s))
+        img = img.crop((0, top, img.width, bot))
+        an = {k: ([v[0], v[1] - top] if isinstance(v, list) and len(v) == 2 and k != "size" else v) for k, v in an.items()}
+    f, fsm = font(int(28 * s)), font(int(22 * s))
+    canvas = Image.new("RGB", (int(img.width * widen), img.height), "white")
+    canvas.paste(img, (0, 0))
+    d = ImageDraw.Draw(canvas)
+    col_x = int(img.width * col_ratio)
+    order = sorted(names, key=lambda kv: an[kv[0]][1])
+    ys = [an[k][1] for k, _ in order]
+    gap = int(58 * s)
+    for i in range(1, len(ys)):
+        ys[i] = max(ys[i], ys[i - 1] + gap)
+    for (key, text), y in zip(order, ys):
+        leader(d, an[key], [col_x, y], text, f)
+    d.text((int(16 * s), img.height - int(40 * s)), note, font=fsm, fill=(110, 115, 125))
+    out = ROOT / "figures" / out_name
+    canvas.save(out)
+    print(f"✅ 저장: {out.relative_to(ROOT)}")
+
+
+def make_hydro(a):
+    """그림: 오일 정압 원형 패드 베어링 반단면."""
+    with tempfile.TemporaryDirectory() as tmpd:
+        tmp = Path(tmpd)
+        print("🎨 Blender 렌더링 중… (오일 정압 패드)")
+        img, an = run_blender("hydrostatic_pad_3d.py", tmp / "hp.png", tmp / "hp.json",
+                              ["--samples", str(a.samples), "--width", str(a.w), "--height", str(a.h)])
+    names = [("supply", "Oil supply (Ps)"), ("cap", "Capillary restrictor"), ("pad", "Bearing pad"),
+             ("recess", "Recess (Pr)"), ("land", "Land"), ("film", "Oil film (h)"), ("rail", "Guide rail")]
+    label_column(img, an, names, a, "Half section; film thickness and recess depth exaggerated, not to scale.",
+                 "hb_pad_3d.png")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true")
-    ap.add_argument("--only", choices=["clearance", "edge"], help="한 그림만 다시 만들기")
+    ap.add_argument("--only", choices=["clearance", "edge", "hydro"], help="한 그림만 다시 만들기 (hydro: 정압 베어링 샘플용)")
     ap.add_argument("--punch-d", type=float, default=40.0)
     ap.add_argument("--thick", dest="t", type=float, default=3.0)
     ap.add_argument("--gap", dest="c", type=float, default=4.0)
     a = ap.parse_args()
     a.samples, a.w, a.h = (24, 900, 700) if a.quick else (160, 1400, 1100)
+    if a.only == "hydro":
+        make_hydro(a)
+        return
     if a.only != "clearance":
         make_sheared_edge(a)
     if a.only == "edge":
