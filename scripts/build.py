@@ -293,6 +293,8 @@ def run_pandoc(cfg: Config, md_path: Path, docx_path: Path, ref_docx: Path):
         csl = ROOT / f.get("csl", "templates/apa.csl")
         if csl.exists():
             cmd.append(f"--csl={csl}")
+        if f.get("bib_order", "korean-first") == "korean-first":      # 국내 문헌 → 해외 문헌 순서
+            cmd.append(f"--lua-filter={ROOT / 'templates' / 'korean_first.lua'}")
     subprocess.run(cmd, check=True, cwd=ROOT)
 
 

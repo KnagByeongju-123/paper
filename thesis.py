@@ -3,7 +3,7 @@
 사용법 (그냥 `python thesis.py` 만 쳐도 메뉴가 나옵니다)
 
   python thesis.py new                      # ★ 포크 후 처음 한 번: 샘플을 지우고 빈 논문으로 시작
-  python thesis.py example                  # 샘플 논문(펀치·다이 간극)으로 되돌리기 — 구경용
+  python thesis.py example                  # 샘플 논문 목록 / example punch-die 처럼 이름을 주면 그 샘플로 바꿈
   python thesis.py gui                      # ★ 입력 화면 열기 (브라우저) — 정보·자료·현황 + 하단 Claude 입력란
   python thesis.py init                     # 논문 주제·기본 정보 입력 (질문에 답하기)
   python thesis.py add                      # 자료 추가 (질문에 답하기)
@@ -11,6 +11,7 @@
   python thesis.py add 메모.txt --to 1 --section "연구 배경"
   python thesis.py add --text "본 연구는 …" --to 1 --section "연구 목적"
   python thesis.py add 자료.pdf             # 장을 안 정하면 '대기'로 보관 → Claude 가 정리
+  python thesis.py doi 10.1016/xxxx         # DOI 로 실제 서지정보를 받아 references.bib 에 추가 (국내·해외)
   python thesis.py status                   # 장별 진행 현황
   python thesis.py build                    # Word + PDF 만들기
 
@@ -487,7 +488,8 @@ def cmd_build(args):
 
 
 SKELETON = ROOT / "templates" / "skeleton"
-EXAMPLE = ROOT / "examples" / "sample-punch-die"
+EXAMPLES_DIR = ROOT / "examples"
+DEFAULT_EXAMPLE = "sample-punch-die"
 WORK_DIRS = ["notes", "images", "papers", "data"]
 
 
@@ -528,20 +530,76 @@ def cmd_new(args):
 
 
 def cmd_example(args):
-    """샘플 논문으로 되돌리기 (구경용)."""
-    if not _confirm(args, "현재 내용을 샘플 논문(펀치·다이 간극)으로 바꿉니다."):
+    """샘플 논문으로 바꾸기 (구경용). 이름을 안 주면 목록을 보여 준다."""
+    names = sorted(p.name for p in EXAMPLES_DIR.iterdir() if (p / "thesis.yaml").exists())
+    name = getattr(args, "name", None)
+    if not name:
+        print("사용할 수 있는 샘플:")
+        for n in names:
+            title = re.search(r'title_ko:\s*"([^"]*)"', (EXAMPLES_DIR / n / "thesis.yaml").read_text(encoding="utf-8"))
+            print(f"  {n:<32} {title.group(1) if title else ''}")
+        print("\n예: python thesis.py example " + (names[0] if names else DEFAULT_EXAMPLE))
+        return
+    name = name if name.startswith("sample-") else f"sample-{name}"
+    ex = EXAMPLES_DIR / name
+    if not (ex / "thesis.yaml").exists():
+        raise SystemExit(f"❌ 샘플 '{name}' 이(가) 없습니다. python thesis.py example 로 목록을 확인하세요.")
+    if not _confirm(args, f"현재 내용을 샘플 '{name}' 으로 바꿉니다."):
         print("취소했습니다.")
         return
     _clear_work()
-    shutil.copytree(EXAMPLE / "chapters", CHAPTER_DIR, dirs_exist_ok=True)
-    shutil.copytree(EXAMPLE / "figures", FIG_DIR, dirs_exist_ok=True)
-    for d in ("notes", "data"):
-        if (EXAMPLE / "sources" / d).exists():
-            shutil.copytree(EXAMPLE / "sources" / d, SOURCE_DIR / d, dirs_exist_ok=True)
-    shutil.copy2(EXAMPLE / "sources" / "SOURCES.md", MANIFEST)
-    shutil.copy2(EXAMPLE / "thesis.yaml", YAML_PATH)
-    shutil.copy2(EXAMPLE / "references.bib", ROOT / "references.bib")
-    print("✅ 샘플 논문으로 바꿨습니다. python thesis.py build 로 PDF 를 만들어 보세요.")
+    shutil.copytree(ex / "chapters", CHAPTER_DIR, dirs_exist_ok=True)
+    if (ex / "figures").exists():
+        shutil.copytree(ex / "figures", FIG_DIR, dirs_exist_ok=True)
+    for d in WORK_DIRS:
+        if (ex / "sources" / d).exists():
+            shutil.copytree(ex / "sources" / d, SOURCE_DIR / d, dirs_exist_ok=True)
+    shutil.copy2(ex / "sources" / "SOURCES.md", MANIFEST)
+    shutil.copy2(ex / "thesis.yaml", YAML_PATH)
+    shutil.copy2(ex / "references.bib", ROOT / "references.bib")
+    print(f"✅ 샘플 '{name}' 으로 바꿨습니다. python thesis.py build 로 PDF 를 만들어 보세요.")
+
+
+def cmd_doi(args):
+    """DOI → BibTeX (doi.org 공개 메타데이터) → references.bib 에 추가."""
+    import unicodedata
+    import urllib.request
+
+    bib = ROOT / "references.bib"
+    text = bib.read_text(encoding="utf-8") if bib.exists() else ""
+    for raw in args.dois:
+        doi = re.sub(r"^(https?://(dx\.)?doi\.org/|doi:)", "", raw.strip(), flags=re.I)
+        if doi.lower() in text.lower():
+            print(f"⏭️  이미 있음: {doi}")
+            continue
+        req = urllib.request.Request(f"https://doi.org/{doi}", headers={"Accept": "application/x-bibtex; charset=utf-8"})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                entry = r.read().decode("utf-8").strip()
+        except Exception as e:
+            print(f"❌ {doi}: 가져오지 못했습니다 ({e}). DOI 를 확인하세요.")
+            continue
+        m = re.match(r"@(\w+)\{([^,]+),", entry)
+        if not m:
+            print(f"❌ {doi}: BibTeX 형식이 아닙니다.")
+            continue
+        # 키 규칙: 첫 저자 성(영문 소문자) + 연도  (예: swift1952)
+        au = re.search(r"author\s*=\s*\{([^}]*)\}", entry)
+        yr = re.search(r"year\s*=\s*\{?(\d{4})", entry)
+        first = (au.group(1).split(" and ")[0] if au else "").strip()
+        family = first.split(",")[0] if "," in first else (first.split()[-1] if first else "")
+        ascii_family = unicodedata.normalize("NFKD", family).encode("ascii", "ignore").decode().lower()
+        ascii_family = re.sub(r"[^a-z]", "", ascii_family)
+        key = f"{ascii_family or 'ref'}{yr.group(1) if yr else ''}"
+        base, n = key, 0
+        while re.search(rf"@\w+\{{{re.escape(key)},", text):
+            n += 1
+            key = f"{base}{'abcdefghij'[n - 1]}"
+        entry = entry.replace(m.group(0), f"@{m.group(1).lower()}{{{key},", 1)
+        entry = entry.replace("–", "--").replace("}, ", "},\n  ")
+        text = text.rstrip() + "\n\n" + entry + "\n"
+        print(f"✅ 추가: [@{key}]  ← {doi}" + ("  (한글 저자: 키를 영문 성+연도로 바꾸세요)" if not ascii_family else ""))
+    bib.write_text(text, encoding="utf-8")
 
 
 def cmd_gui(args):
@@ -569,9 +627,11 @@ def main():
     ap = argparse.ArgumentParser(description="학위논문 도우미", formatter_class=argparse.RawDescriptionHelpFormatter,
                                  epilog=__doc__)
     sub = ap.add_subparsers(dest="cmd")
-    for name, hlp in (("new", "샘플을 지우고 빈 논문으로 시작 (포크 후 처음 한 번)"), ("example", "샘플 논문으로 되돌리기")):
-        sp = sub.add_parser(name, help=hlp)
-        sp.add_argument("--yes", action="store_true", help="묻지 않고 바로 실행")
+    sp = sub.add_parser("new", help="샘플을 지우고 빈 논문으로 시작 (포크 후 처음 한 번)")
+    sp.add_argument("--yes", action="store_true", help="묻지 않고 바로 실행")
+    sp = sub.add_parser("example", help="샘플 논문으로 바꾸기 (이름 없이 실행하면 목록)")
+    sp.add_argument("name", nargs="?", help="샘플 이름 (예: punch-die, hydrostatic-bearing)")
+    sp.add_argument("--yes", action="store_true", help="묻지 않고 바로 실행")
     g = sub.add_parser("gui", help="입력 화면 열기 (브라우저)")
     g.add_argument("--port", type=int, default=8765)
     g.add_argument("--no-browser", action="store_true")
@@ -586,12 +646,14 @@ def main():
     a.add_argument("--width", default="80%", help="그림 너비 (기본 80%%)")
     a.add_argument("--lead", help="그림 앞에 넣을 안내 문장 (예: \"연구 모형은 @fig 와 같다.\")")
     a.add_argument("--note", help="SOURCES.md 에 남길 메모 (출처 등)")
+    dp = sub.add_parser("doi", help="DOI 로 참고문헌 추가 (국내·해외 논문)")
+    dp.add_argument("dois", nargs="+", help="DOI (여러 개 가능). 예: 10.1016/0022-5096(52)90002-1")
     sub.add_parser("status", help="진행 현황")
     b = sub.add_parser("build", help="Word + PDF 만들기")
     b.add_argument("--no-pdf", action="store_true")
     b.add_argument("--force", action="store_true")
     args = ap.parse_args()
-    {"new": cmd_new, "example": cmd_example, "gui": cmd_gui, "init": cmd_init, "add": cmd_add, "status": cmd_status, "build": cmd_build,
+    {"doi": cmd_doi, "new": cmd_new, "example": cmd_example, "gui": cmd_gui, "init": cmd_init, "add": cmd_add, "status": cmd_status, "build": cmd_build,
      None: lambda _a: menu()}[args.cmd](args)
 
 

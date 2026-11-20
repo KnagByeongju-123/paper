@@ -55,13 +55,12 @@ def main():
         csv_path = cands[-1]
     data, example = load(csv_path)
 
-    fam = korean_font()
-    if fam:
-        plt.rcParams["font.family"] = fam
+    # 그림 속 글자는 영문 (기본 영문 글꼴 사용)
+    plt.rcParams["font.family"] = "DejaVu Sans"
     plt.rcParams.update({"axes.unicode_minus": False, "font.size": 11})
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.4), dpi=200)
-    panels = [(1, "(a) 전단면 비율", "전단면 비율 (%)"), (2, "(b) 버 높이", "버 높이 (μm)")]
+    panels = [(1, "(a) Burnish ratio", "Burnish ratio (%)"), (2, "(b) Burr height", "Burr height (μm)")]
     for ax, (col, title, ylabel) in zip(axes, panels):
         ends = []
         for (mat, pts), (color, marker) in zip(data.items(), STYLE):
@@ -77,7 +76,7 @@ def main():
         for y, mat, x in ends:
             ax.annotate(mat, (x, y), xytext=(10, 0), textcoords="offset points", va="center", fontsize=10, color=INK)
         ax.set_title(title, loc="left", fontsize=12, color=INK, pad=10)
-        ax.set_xlabel("편측 간극 비율 k (판 두께 대비 %)", color=MUTED)
+        ax.set_xlabel("Clearance ratio k (% of sheet thickness, per side)", color=MUTED)
         ax.set_ylabel(ylabel, color=MUTED)
         ax.grid(axis="y", color=GRID, lw=0.8)
         ax.set_axisbelow(True)
@@ -92,7 +91,7 @@ def main():
         ax.set_xlim(xs_all[0] - 1, xs_all[-1] * 1.35)
     axes[0].legend(frameon=False, loc="lower left", fontsize=10)
     if example:
-        fig.text(0.5, 0.5, "예시 데이터", ha="center", va="center", fontsize=70, color="#d0d4d9",
+        fig.text(0.5, 0.5, "EXAMPLE DATA", ha="center", va="center", fontsize=64, color="#d0d4d9",
                  alpha=0.35, rotation=20, zorder=0)
     fig.tight_layout()
     out = ROOT / "figures" / "result_clearance.png"

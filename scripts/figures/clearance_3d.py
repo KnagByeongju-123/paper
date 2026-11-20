@@ -114,15 +114,16 @@ shank = cylinder("Shank", Rp * 0.6, 18, t - pen + PUNCH_H + 9)
 boolean(punch, shank, "UNION")
 bpy.data.objects.remove(shank)
 
+# 재질: 무광(metallic 0, roughness 0.7 이상) — CLAUDE.md 그림 규칙
 # ---- 앞쪽 절반 잘라내기 → 반단면 ----
 for o in (die, sheet, punch):
     cutter = box("Cutter", 400, 200, 400, (0, -100, 0))
     boolean(o, cutter)
     bpy.data.objects.remove(cutter)
 
-die.data.materials.append(material("DieMat", (0.36, 0.45, 0.58), 0.7, 0.32))
-punch.data.materials.append(material("PunchMat", (0.55, 0.57, 0.60), 0.85, 0.30))
-sheet.data.materials.append(material("SheetMat", (0.92, 0.55, 0.22), 0.3, 0.45))
+die.data.materials.append(material("DieMat", (0.36, 0.45, 0.58), 0.0, 0.75))
+punch.data.materials.append(material("PunchMat", (0.62, 0.64, 0.67), 0.0, 0.70))
+sheet.data.materials.append(material("SheetMat", (0.92, 0.62, 0.32), 0.0, 0.80))
 for o in (die, sheet, punch):
     smooth(o)
 
@@ -185,6 +186,7 @@ anchors = {
     "punch": to_px((Rp * 0.3, 0, t - pen + PUNCH_H * 0.6)),
     "die": to_px((Rd + 12, 0, -DIE_H * 0.55)),
     "sheet": to_px((Rd + 14, 0, t)),
+    "sheet_left": to_px((-(Rd + 12), 0, t)),
     "gap_left": to_px((Rp, 0, -1.5)),
     "gap_right": to_px((Rd, 0, -1.5)),
     "gap_top": to_px((Rp + args.gap / 2, 0, t * 0.2)),

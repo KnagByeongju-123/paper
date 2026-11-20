@@ -47,6 +47,7 @@ format:
   list_of_tables: true                  # 표 목차
   csl: templates/apa.csl                # 참고문헌 양식 (APA 7판)
   bibliography: references.bib
+  bib_order: korean-first              # 참고문헌: korean-first(국내 먼저) / style(양식 기본 순서)
   # 그림/표 번호 형식: {chapter}=장 번호, {n}=장 안에서의 순번
   figure_label: "그림 {chapter}-{n}"
   table_label: "표 {chapter}-{n}"
